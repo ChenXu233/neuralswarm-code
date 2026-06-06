@@ -74,6 +74,35 @@ class LLMGateway:
 
         return adapter.parse_response(response.json())
 
+    async def chat_with_fallback(
+        self,
+        model_id: str,
+        messages: list[dict],
+        providers: list[str],
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        """带降级的非流式聊天。依次尝试 providers 列表中的 provider。"""
+        last_error = None
+        for provider in providers:
+            try:
+                return await self.chat(
+                    provider=provider,
+                    model_id=model_id,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+            except LLMRateLimitError:
+                last_error = LLMRateLimitError(f"Provider {provider} rate limited")
+                continue
+            except (LLMError, LLMTimeoutError) as e:
+                if e.retryable:
+                    last_error = e
+                    continue
+                raise
+        raise last_error or LLMError("All providers failed")
+
     async def chat_stream(
         self,
         provider: str,
