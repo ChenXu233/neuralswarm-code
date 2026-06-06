@@ -1,3 +1,4 @@
+from neuralswarm.services.llm.gateway import LLMGateway
 from neuralswarm.services.llm.types import (
     LLMChunk,
     LLMError,
@@ -9,6 +10,7 @@ from neuralswarm.services.llm.types import (
 __all__ = [
     "LLMChunk",
     "LLMError",
+    "LLMGateway",
     "LLMRateLimitError",
     "LLMResponse",
     "LLMTimeoutError",
