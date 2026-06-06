@@ -12,6 +12,13 @@ class ToolExecutor:
         """注册工具。"""
         self._tools[name] = func
 
+    def register_defaults(self):
+        """注册内置工具。"""
+        from neuralswarm.core.tools import file_read, file_write, shell
+        self.register("file_read", file_read)
+        self.register("file_write", file_write)
+        self.register("shell", shell)
+
     def list_tools(self) -> list[str]:
         """列出所有已注册工具。"""
         return list(self._tools.keys())
