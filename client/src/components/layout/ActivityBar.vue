@@ -1,41 +1,45 @@
 <script setup lang="ts">
 import { MessageSquare, Folder, Puzzle, Settings } from 'lucide-vue-next'
 
-defineProps<{
-  activePanel: 'chat' | 'files' | 'plugins' | 'settings'
+const props = defineProps<{
+  activePanel: 'chat' | 'files' | 'plugins' | 'settings' | null
 }>()
 
-defineEmits<{
-  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'settings']
+const emit = defineEmits<{
+  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'settings' | null]
 }>()
+
+function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
+  // Toggle: if same panel is clicked, collapse; otherwise switch
+  emit('update:activePanel', props.activePanel === panel ? null : panel)
+}
 </script>
 
 <template>
   <div class="activity-bar">
-    <!-- Logo -->
     <div class="activity-logo">N</div>
 
     <div class="top-icons">
       <button
         :class="['activity-btn', { active: activePanel === 'chat' }]"
         title="Chat"
-        @click="$emit('update:activePanel', 'chat')"
+        @click="handleClick('chat')"
       >
-        <MessageSquare :size="16" />
+        <MessageSquare :size="20" />
       </button>
       <button
         :class="['activity-btn', { active: activePanel === 'files' }]"
         title="Files"
-        @click="$emit('update:activePanel', 'files')"
+        @click="handleClick('files')"
       >
-        <Folder :size="16" />
+        <Folder :size="20" />
       </button>
       <button
         :class="['activity-btn', { active: activePanel === 'plugins' }]"
         title="Plugins"
-        @click="$emit('update:activePanel', 'plugins')"
+        @click="handleClick('plugins')"
       >
-        <Puzzle :size="16" />
+        <Puzzle :size="20" />
       </button>
     </div>
 
@@ -43,9 +47,9 @@ defineEmits<{
       <button
         :class="['activity-btn', { active: activePanel === 'settings' }]"
         title="Settings"
-        @click="$emit('update:activePanel', 'settings')"
+        @click="handleClick('settings')"
       >
-        <Settings :size="16" />
+        <Settings :size="20" />
         <span class="connection-dot"></span>
       </button>
     </div>
@@ -63,29 +67,28 @@ defineEmits<{
   flex-direction: column;
   align-items: center;
   padding: 8px 0;
-  gap: 6px;
+  gap: 4px;
 }
 
-/* Logo */
 .activity-logo {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: var(--color-primary);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-bg);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: var(--font-semibold);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .top-icons, .bottom-icons {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .top-icons {
@@ -96,10 +99,9 @@ defineEmits<{
   position: relative;
 }
 
-/* Activity Button */
 .activity-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -117,7 +119,6 @@ defineEmits<{
   background: var(--color-surface-hover);
 }
 
-/* Active: left indicator line */
 .activity-btn.active {
   color: var(--color-accent);
   background: var(--color-activity-active);
@@ -134,7 +135,6 @@ defineEmits<{
   border-radius: 0 2px 2px 0;
 }
 
-/* Connection dot */
 .connection-dot {
   position: absolute;
   right: 2px;

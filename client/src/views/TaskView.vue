@@ -18,12 +18,12 @@ import type { Project } from '../api/client'
 
 const props = defineProps<{
   project: Project
-  activePanel: 'chat' | 'files' | 'plugins' | 'settings'
+  activePanel: 'chat' | 'files' | 'plugins' | 'settings' | null
 }>()
 
 const emit = defineEmits<{
   back: []
-  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'settings']
+  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'settings' | null]
 }>()
 
 const { tasks, currentTask, loading, submit, loadTasks } = useTask()
@@ -74,7 +74,7 @@ loadTasks(props.project.id)
 <template>
   <div class="task-view">
     <Sidebar
-      v-if="activePanel !== 'settings'"
+      v-if="activePanel && activePanel !== 'settings'"
       :title="activePanel === 'chat' ? 'Chat' : activePanel === 'files' ? 'Files' : 'Plugins'"
     >
       <ChatPanel
@@ -88,7 +88,7 @@ loadTasks(props.project.id)
     </Sidebar>
 
     <SettingsPanel
-      v-else
+      v-else-if="activePanel === 'settings'"
       :servers="servers"
       active-server="localhost:8000"
     />

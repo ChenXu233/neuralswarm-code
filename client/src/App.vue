@@ -6,14 +6,12 @@ import HomePage from './components/HomePage.vue'
 import TaskView from './views/TaskView.vue'
 import { listProjects, type Project } from './api/client'
 
-// 初始化主题
 useTheme()
 
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
-const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings'>('chat')
+const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings' | null>('chat')
 
-// 加载项目列表
 async function loadProjects() {
   try {
     projects.value = await listProjects()
