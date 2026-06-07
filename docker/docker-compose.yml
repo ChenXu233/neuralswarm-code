@@ -1,6 +1,8 @@
 # NeuralSwarm Docker Compose
 # 按需部署：docker compose --profile <profile> up -d
 #
+# 环境变量：从项目根目录 .env 读取
+#
 # Profiles:
 #   infra  — PostgreSQL + Redis（基础架构）
 #   server — FastAPI 服务器（依赖 infra）
@@ -19,6 +21,7 @@ services:
     image: postgres:17-alpine
     container_name: neuralswarm-postgres
     profiles: ["infra"]
+    env_file: ../.env
     environment:
       POSTGRES_USER: ${NS_DB_USER:-neuralswarm}
       POSTGRES_PASSWORD: ${NS_DB_PASSWORD:-neuralswarm}
@@ -38,7 +41,13 @@ services:
     image: redis:7-alpine
     container_name: neuralswarm-redis
     profiles: ["infra"]
-    command: redis-server --requirepass ${NS_REDIS_PASSWORD:-}
+    env_file: ../.env
+    command: >
+      sh -c 'if [ -n "$NS_REDIS_PASSWORD" ]; then
+        redis-server --requirepass "$NS_REDIS_PASSWORD";
+      else
+        redis-server;
+      fi'
     ports:
       - "${NS_REDIS_PORT:-6379}:6379"
     volumes:
@@ -58,6 +67,7 @@ services:
       dockerfile: docker/Dockerfile.server
     container_name: neuralswarm-server
     profiles: ["server"]
+    env_file: ../.env
     environment:
       NS_DATABASE_URL: postgresql+asyncpg://${NS_DB_USER:-neuralswarm}:${NS_DB_PASSWORD:-neuralswarm}@postgres:5432/${NS_DB_NAME:-neuralswarm}
       NS_REDIS_URL: redis://${NS_REDIS_PASSWORD:-""}@redis:6379/0
