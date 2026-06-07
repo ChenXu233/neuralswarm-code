@@ -1,89 +1,48 @@
 <script setup lang="ts">
-import { Wrench, Check } from 'lucide-vue-next'
+defineProps<{ tool: string; args: any; output?: string }>()
 
-defineProps<{
-  tool: string
-  args: any
-  output?: string
-}>()
+function formatArgs(args: any): string {
+  return JSON.stringify(args, null, 2)
+}
 </script>
 
 <template>
   <div class="tool-call">
-    <div class="tool-header">
-      <div class="tool-icon">
-        <Wrench :size="14" />
-      </div>
-      <span class="tool-name">{{ tool }}</span>
-      <span v-if="output" class="tool-status success">
-        <Check :size="12" />
-      </span>
+    <div class="header">
+      <span class="icon">&#x1f527;</span>
+      <span class="name">{{ tool }}</span>
     </div>
-    <div v-if="output" class="tool-output">
-      <pre>{{ output }}</pre>
+    <pre class="code-block"><code>{{ formatArgs(args) }}</code></pre>
+    <div v-if="output" class="output">
+      <div class="label">Output:</div>
+      <pre class="code-block"><code>{{ output }}</code></pre>
     </div>
   </div>
 </template>
 
 <style scoped>
-.tool-call {
-  margin-bottom: 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 12px 16px;
-  max-width: 65%;
-}
-
-.tool-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tool-icon {
-  width: 24px;
-  height: 24px;
-  background: var(--color-surface-hover);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
-}
-
-.tool-name {
+.tool-call { margin: 8px 0; padding: 12px; background: var(--color-surface, #fafafa); border: 1px solid var(--color-border, #e8e8e8); border-radius: 8px; }
+.header { font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.icon { font-size: 14px; }
+.name { font-size: 13px; font-weight: 600; color: var(--color-text, #333); }
+.code-block {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 12px;
+  border-radius: 6px;
   font-size: 12px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.tool-status {
-  display: flex;
-  align-items: center;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  font-size: 10px;
-}
-
-.tool-status.success {
-  background: #f6ffed;
-  color: var(--color-success);
-}
-
-.tool-output {
-  margin-top: 8px;
-  padding: 8px 10px;
-  background: var(--color-surface-hover);
-  border-radius: var(--radius-sm);
-}
-
-.tool-output pre {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-text-secondary);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  overflow-x: auto;
+  line-height: 1.5;
   margin: 0;
-  white-space: pre-wrap;
-  word-break: break-all;
+}
+.code-block code {
+  white-space: pre;
+}
+.output { margin-top: 10px; }
+.label { font-size: 11px; color: var(--color-text-tertiary, #999); margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.output .code-block {
+  max-height: 300px;
+  overflow-y: auto;
 }
 </style>
