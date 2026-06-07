@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useTheme } from './composables/useTheme'
+import ActivityBar from './components/layout/ActivityBar.vue'
 import HomePage from './components/HomePage.vue'
 import TaskView from './views/TaskView.vue'
 import { listProjects, type Project } from './api/client'
@@ -10,6 +11,7 @@ useTheme()
 
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
+const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings'>('chat')
 
 // 加载项目列表
 async function loadProjects() {
@@ -32,20 +34,34 @@ loadProjects()
 </script>
 
 <template>
-  <div id="app">
-    <HomePage
-      v-if="!selectedProject"
-      :projects="projects"
-      @select="handleSelectProject"
-    />
-    <TaskView
-      v-else
-      :project="selectedProject"
-      @back="handleBack"
-    />
+  <div id="app" class="app-layout">
+    <ActivityBar v-model:active-panel="activePanel" />
+    <div class="app-content">
+      <HomePage
+        v-if="!selectedProject"
+        :projects="projects"
+        @select="handleSelectProject"
+      />
+      <TaskView
+        v-else
+        :project="selectedProject"
+        :active-panel="activePanel"
+        @back="handleBack"
+        @update:active-panel="activePanel = $event"
+      />
+    </div>
   </div>
 </template>
 
-<style>
-/* Global styles are in base.css */
+<style scoped>
+.app-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
 </style>

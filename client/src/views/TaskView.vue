@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
-import ActivityBar from '../components/layout/ActivityBar.vue'
 import Sidebar from '../components/layout/Sidebar.vue'
 import MainContent from '../components/layout/MainContent.vue'
 import ChatPanel from '../components/sidebar/ChatPanel.vue'
@@ -16,10 +15,16 @@ import { useWebSocket } from '../composables/useWebSocket'
 import { useTask } from '../composables/useTask'
 import type { Project } from '../api/client'
 
-const props = defineProps<{ project: Project }>()
-const emit = defineEmits<{ back: [] }>()
+const props = defineProps<{
+  project: Project
+  activePanel: 'chat' | 'files' | 'plugins' | 'settings'
+}>()
 
-const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings'>('chat')
+const emit = defineEmits<{
+  back: []
+  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'settings']
+}>()
+
 const { tasks, currentTask, loading, submit, loadTasks } = useTask()
 
 const activeTaskId = computed(() => currentTask.value?.id || '')
@@ -60,8 +65,6 @@ loadTasks(props.project.id)
 
 <template>
   <div class="task-view">
-    <ActivityBar v-model:active-panel="activePanel" />
-
     <Sidebar v-if="activePanel !== 'settings'" :title="activePanel === 'chat' ? '对话' : activePanel === 'files' ? '文件' : '插件'">
       <ChatPanel
         v-if="activePanel === 'chat'"
@@ -113,7 +116,7 @@ loadTasks(props.project.id)
 <style scoped>
 .task-view {
   display: flex;
-  height: 100vh;
+  flex: 1;
   background: var(--color-bg);
 }
 
