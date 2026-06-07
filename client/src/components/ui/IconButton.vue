@@ -21,8 +21,8 @@ defineEmits<{
 
 <style scoped>
 .icon-button {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -30,18 +30,18 @@ defineEmits<{
   cursor: pointer;
   border: none;
   background: transparent;
-  color: var(--color-text);
-  opacity: 0.6;
-  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+  color: var(--color-text-secondary);
+  position: relative;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .icon-button:hover {
-  opacity: 1;
+  color: var(--color-text);
   background-color: var(--color-surface-hover);
 }
 
 .icon-button.active {
-  opacity: 1;
+  color: var(--color-accent);
   background-color: var(--color-activity-active);
 }
 </style>

@@ -14,9 +14,14 @@ defineProps<{
   width: 8px;
   height: 8px;
   border-radius: var(--radius-full);
+  flex-shrink: 0;
 }
 
-.running { background-color: var(--color-accent); }
+.running {
+  background-color: var(--color-success);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
 .completed { background-color: var(--color-success); }
 .failed { background-color: var(--color-error); }
 .pending { background-color: var(--color-text-tertiary); }

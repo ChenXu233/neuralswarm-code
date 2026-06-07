@@ -16,8 +16,9 @@ defineProps<{
   align-items: center;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  line-height: 1.5;
 }
 
 .default {
@@ -26,22 +27,22 @@ defineProps<{
 }
 
 .primary {
-  background-color: #e6f7ff;
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
   color: var(--color-accent);
 }
 
 .success {
-  background-color: #f6ffed;
+  background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
   color: var(--color-success);
 }
 
 .warning {
-  background-color: #fff7e6;
+  background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
   color: var(--color-warning);
 }
 
 .error {
-  background-color: #fff2f0;
+  background-color: color-mix(in srgb, var(--color-error) 12%, transparent);
   color: var(--color-error);
 }
 </style>
