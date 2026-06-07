@@ -2,7 +2,8 @@
 import { ref } from 'vue'
 import { useTheme } from './composables/useTheme'
 import HomePage from './components/HomePage.vue'
-import type { Project } from './api/client'
+import TaskView from './views/TaskView.vue'
+import { listProjects, type Project } from './api/client'
 
 // 初始化主题
 useTheme()
@@ -10,14 +11,24 @@ useTheme()
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
 
+// 加载项目列表
+async function loadProjects() {
+  try {
+    projects.value = await listProjects()
+  } catch (e) {
+    console.error('Failed to load projects:', e)
+  }
+}
+
 function handleSelectProject(project: Project) {
   selectedProject.value = project
 }
 
-function handleGlobalMode() {
+function handleBack() {
   selectedProject.value = null
-  // TODO: 进入全局模式对话
 }
+
+loadProjects()
 </script>
 
 <template>
@@ -26,12 +37,12 @@ function handleGlobalMode() {
       v-if="!selectedProject"
       :projects="projects"
       @select="handleSelectProject"
-      @global="handleGlobalMode"
     />
-    <!-- TODO: TaskView will be integrated in Task 9 -->
-    <div v-else>
-      <p>TaskView will be here</p>
-    </div>
+    <TaskView
+      v-else
+      :project="selectedProject"
+      @back="handleBack"
+    />
   </div>
 </template>
 

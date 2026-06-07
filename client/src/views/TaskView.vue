@@ -1,16 +1,25 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useWebSocket } from '../composables/useWebSocket'
-import { useTask } from '../composables/useTask'
-import { type Project } from '../api/client'
+import { ArrowLeft } from 'lucide-vue-next'
+import ActivityBar from '../components/layout/ActivityBar.vue'
+import Sidebar from '../components/layout/Sidebar.vue'
+import MainContent from '../components/layout/MainContent.vue'
+import ChatPanel from '../components/sidebar/ChatPanel.vue'
+import FilesPanel from '../components/sidebar/FilesPanel.vue'
+import PluginsPanel from '../components/sidebar/PluginsPanel.vue'
+import SettingsPanel from '../components/sidebar/SettingsPanel.vue'
 import ChatMessage from '../components/ChatMessage.vue'
 import ToolCall from '../components/ToolCall.vue'
-import TaskStatus from '../components/TaskStatus.vue'
+import ChatInput from '../components/chat/ChatInput.vue'
+import StatusDot from '../components/ui/StatusDot.vue'
+import { useWebSocket } from '../composables/useWebSocket'
+import { useTask } from '../composables/useTask'
+import type { Project } from '../api/client'
 
 const props = defineProps<{ project: Project }>()
 const emit = defineEmits<{ back: [] }>()
 
-const prompt = ref('')
+const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings'>('chat')
 const { tasks, currentTask, loading, error, submit, loadTasks } = useTask()
 
 const activeTaskId = computed(() => currentTask.value?.id || '')
@@ -38,10 +47,12 @@ const taskStatus = computed(() => {
   return statusEvent?.data.status || currentTask.value?.status || 'pending'
 })
 
-async function handleSubmit() {
-  if (!prompt.value.trim()) return
-  await submit(props.project.id, prompt.value)
-  prompt.value = ''
+const servers = ref([
+  { url: 'localhost:8000', status: 'connected' as const },
+])
+
+async function handleSubmit(text: string) {
+  await submit(props.project.id, text)
 }
 
 loadTasks(props.project.id)
@@ -49,51 +60,101 @@ loadTasks(props.project.id)
 
 <template>
   <div class="task-view">
-    <div class="header">
-      <button @click="emit('back')">&larr; Back</button>
-      <h2>{{ project.name }}</h2>
-      <TaskStatus :status="taskStatus" />
-      <span class="ws-status">{{ connected ? 'Connected' : 'Disconnected' }}</span>
-    </div>
+    <ActivityBar v-model:active-panel="activePanel" />
 
-    <div class="chat-area">
-      <div class="task-list">
-        <div v-for="t in tasks" :key="t.id" :class="['task-item', { active: t.id === currentTask?.id }]" @click="currentTask = t">
-          <span class="task-input">{{ t.input.slice(0, 50) }}</span>
-          <TaskStatus :status="t.status" />
-        </div>
+    <Sidebar v-if="activePanel !== 'settings'" :title="activePanel === 'chat' ? '对话' : activePanel === 'files' ? '文件' : '插件'">
+      <ChatPanel
+        v-if="activePanel === 'chat'"
+        :tasks="tasks"
+        :active-task-id="activeTaskId"
+        @select="currentTask = $event"
+      />
+      <FilesPanel v-else-if="activePanel === 'files'" />
+      <PluginsPanel v-else />
+    </Sidebar>
+
+    <SettingsPanel
+      v-else
+      :servers="servers"
+      active-server="localhost:8000"
+    />
+
+    <MainContent>
+      <div class="chat-header">
+        <button class="back-btn" @click="emit('back')">
+          <ArrowLeft :size="16" />
+        </button>
+        <span class="task-title">{{ project.name }}</span>
+        <StatusDot :status="taskStatus" />
+        <span class="ws-status">{{ connected ? '已连接' : '未连接' }}</span>
       </div>
 
-      <div class="messages">
+      <div class="messages-area">
         <template v-for="(msg, i) in messages" :key="i">
-          <ChatMessage v-if="msg.type === 'message'" role="assistant" :content="msg.data.content" />
-          <ToolCall v-if="msg.type === 'tool_call'" :tool="msg.data.tool" :args="msg.data.args" :output="msg.data.output" />
+          <ChatMessage
+            v-if="msg.type === 'message'"
+            role="assistant"
+            :content="msg.data.content"
+          />
+          <ToolCall
+            v-if="msg.type === 'tool_call'"
+            :tool="msg.data.tool"
+            :args="msg.data.args"
+            :output="msg.data.output"
+          />
         </template>
       </div>
-    </div>
 
-    <div class="input-area">
-      <textarea v-model="prompt" placeholder="Enter your task... (Ctrl+Enter to send)" @keydown.ctrl.enter="handleSubmit"></textarea>
-      <button @click="handleSubmit" :disabled="loading">{{ loading ? 'Sending...' : 'Send' }}</button>
-    </div>
-
-    <div v-if="error" class="error">{{ error }}</div>
+      <ChatInput :loading="loading" @submit="handleSubmit" />
+    </MainContent>
   </div>
 </template>
 
 <style scoped>
-.task-view { display: flex; flex-direction: column; height: 100vh; }
-.header { display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #e8e8e8; }
-.header button { padding: 4px 12px; background: none; border: 1px solid #d9d9d9; border-radius: 4px; cursor: pointer; }
-.ws-status { font-size: 12px; color: #999; margin-left: auto; }
-.chat-area { flex: 1; display: flex; overflow: hidden; }
-.task-list { width: 240px; border-right: 1px solid #e8e8e8; overflow-y: auto; }
-.task-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-.task-item.active { background: #e6f7ff; }
-.task-input { font-size: 13px; display: block; margin-bottom: 4px; }
-.messages { flex: 1; overflow-y: auto; padding: 16px; }
-.input-area { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #e8e8e8; }
-textarea { flex: 1; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px; resize: none; min-height: 60px; font-family: inherit; }
-.input-area button { padding: 8px 24px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; align-self: flex-end; }
-.error { color: #ff4d4f; padding: 8px 12px; }
+.task-view {
+  display: flex;
+  height: 100vh;
+  background: var(--color-bg);
+}
+
+.chat-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.back-btn {
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.back-btn:hover {
+  color: var(--color-text);
+}
+
+.task-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.ws-status {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-left: auto;
+}
+
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
 </style>
