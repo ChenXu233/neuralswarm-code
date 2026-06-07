@@ -6,6 +6,9 @@ from neuralswarm.services.redis import redis_client
 
 router = APIRouter(tags=["websocket"])
 
+HEARTBEAT_INTERVAL = 30  # seconds
+HEARTBEAT_TIMEOUT = 10   # seconds to wait for pong
+
 
 @router.websocket("/ws/tasks/{task_id}")
 async def task_events_ws(websocket: WebSocket, task_id: str):
@@ -19,13 +22,27 @@ async def task_events_ws(websocket: WebSocket, task_id: str):
     # Subscribe to real-time events
     pubsub = await redis_client.subscribe(task_id)
 
+    last_pong = asyncio.get_event_loop().time()
+
     try:
         while True:
-            # Check for client messages (last_event_id for reconnection)
+            now = asyncio.get_event_loop().time()
+
+            # Send heartbeat ping if interval elapsed
+            if now - last_pong >= HEARTBEAT_INTERVAL:
+                try:
+                    await websocket.send_json({"type": "ping"})
+                except Exception:
+                    break
+                last_pong = now
+
+            # Check for client messages
             try:
                 msg = await asyncio.wait_for(websocket.receive_text(), timeout=0.1)
                 data = json.loads(msg)
-                if "last_event_id" in data:
+                if data.get("type") == "pong":
+                    last_pong = asyncio.get_event_loop().time()
+                elif "last_event_id" in data:
                     events = await redis_client.get_events_since(task_id, data["last_event_id"])
                     for event in events:
                         await websocket.send_json(event)

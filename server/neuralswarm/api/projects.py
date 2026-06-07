@@ -2,13 +2,15 @@ import os
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neuralswarm.database import get_db
 from neuralswarm.models.project import Project
-from neuralswarm.schemas.project import ProjectCreate, ProjectListResponse, ProjectResponse
+from neuralswarm.models.task import Task
+from neuralswarm.schemas.project import ProjectCreate, ProjectResponse
+from neuralswarm.schemas.task import TaskResponse
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -72,3 +74,42 @@ async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
     project.deleted_at = datetime.now(timezone.utc)
     await db.commit()
     return {"data": {"id": str(project.id), "deleted": True}}
+
+
+@router.get("/{project_id}/tasks")
+async def list_project_tasks(
+    project_id: str,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """列出项目下的任务。"""
+    try:
+        pid = UUID(project_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # 验证项目存在
+    project_stmt = select(Project).where(Project.id == pid, Project.deleted_at.is_(None))
+    project = (await db.execute(project_stmt)).scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # 查询任务
+    count_stmt = select(func.count()).select_from(Task).where(Task.project_id == pid, Task.deleted_at.is_(None))
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    stmt = (
+        select(Task)
+        .where(Task.project_id == pid, Task.deleted_at.is_(None))
+        .offset(offset)
+        .limit(limit)
+        .order_by(Task.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    tasks = result.scalars().all()
+
+    return {
+        "items": [TaskResponse.model_validate(t).model_dump() for t in tasks],
+        "total": total,
+    }
