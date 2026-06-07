@@ -4,7 +4,7 @@ from uuid import uuid4
 from neuralswarm.core.agent import Agent
 from neuralswarm.core.tool_executor import ToolExecutor
 from neuralswarm.core.context_manager import ContextManager
-from neuralswarm.services.llm.types import LLMResponse
+from neuralswarm.services.llm.types import LLMResponse, ToolCall
 from neuralswarm.models.enums import AgentStatus
 
 
@@ -76,3 +76,26 @@ async def test_agent_execute_updates_context(agent, context_manager):
     assert messages[0]["content"] == "Hello"
     assert messages[1]["role"] == "assistant"
     assert messages[1]["content"] == "Task completed"
+
+
+@pytest.mark.asyncio
+async def test_agent_execute_with_tool_calls(agent, mock_llm_gateway, mock_agent_repo, tool_executor):
+    # First call returns tool call, second returns final response
+    mock_llm_gateway.chat.side_effect = [
+        LLMResponse(content="", model="test", usage={"total_tokens": 50}, tool_calls=[
+            ToolCall(id="call_001", name="add", arguments={"a": 1, "b": 2}),
+        ]),
+        LLMResponse(content="Result is 3", model="test", usage={"total_tokens": 80}),
+    ]
+
+    async def add(a: int, b: int) -> str:
+        return str(a + b)
+    tool_executor.register("add", add)
+
+    result = await agent.execute(
+        task="Calculate 1+2",
+        llm_id=uuid4(),
+        provider="openai",
+        model_id="gpt-4",
+    )
+    assert result == "Result is 3"

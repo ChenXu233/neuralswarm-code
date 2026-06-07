@@ -37,6 +37,7 @@ class Agent:
         provider: str,
         model_id: str,
         max_iterations: int = 10,
+        on_event=None,
     ) -> str:
         """执行任务，返回结果。"""
         await self.agent_repo.update_status(self.agent_id, AgentStatus.RUNNING)
@@ -47,10 +48,20 @@ class Agent:
             for _ in range(max_iterations):
                 messages = self.context_manager.get_messages()
 
+                # Get tool schemas
+                tools = None
+                if self.tool_executor.list_tools():
+                    tools = (
+                        self.tool_executor.to_openai_tools()
+                        if provider == "openai"
+                        else self.tool_executor.to_anthropic_tools()
+                    )
+
                 response = await self.llm_gateway.chat(
                     provider=provider,
                     model_id=model_id,
                     messages=messages,
+                    tools=tools,
                 )
 
                 self.context_manager.update_tokens(response.usage)
@@ -66,15 +77,42 @@ class Agent:
                     )
                     self.context_manager.compact(summary_response.content)
 
-                self.context_manager.add_message("assistant", response.content)
+                # Tool calls
+                if response.tool_calls:
+                    self.context_manager.add_message(
+                        "assistant", response.content or "", tool_calls=response.tool_calls
+                    )
 
-                await self.agent_repo.save_context(
-                    self.agent_id,
-                    {"messages": self.context_manager.get_messages()},
-                )
+                    for call in response.tool_calls:
+                        if on_event:
+                            await on_event("tool_call", {
+                                "call_id": call.id,
+                                "tool": call.name,
+                                "args": call.arguments,
+                            })
 
-                await self.agent_repo.update_status(self.agent_id, AgentStatus.IDLE)
-                return response.content
+                        result = await self.tool_executor.execute(call.name, call.arguments)
+                        self.context_manager.add_tool_result(call.id, result)
+
+                        if on_event:
+                            await on_event("tool_result", {
+                                "call_id": call.id,
+                                "tool": call.name,
+                                "output": result,
+                            })
+                else:
+                    # Final response
+                    self.context_manager.add_message("assistant", response.content)
+
+                    if on_event:
+                        await on_event("message", {"content": response.content})
+
+                    await self.agent_repo.save_context(
+                        self.agent_id,
+                        {"messages": self.context_manager.get_messages()},
+                    )
+                    await self.agent_repo.update_status(self.agent_id, AgentStatus.IDLE)
+                    return response.content
 
             await self.agent_repo.update_status(self.agent_id, AgentStatus.IDLE)
             return "Error: Max iterations reached"

@@ -10,10 +10,27 @@ class ContextManager:
         self.max_tokens = max_tokens
         self.compact_keep = compact_keep
 
-    def add_message(self, role: str, content: str, tokens: int = 0):
-        """添加消息。"""
-        self.messages.append({"role": role, "content": content})
+    def add_message(self, role: str, content: str, tokens: int = 0, tool_calls=None):
+        """添加消息。如果提供 tool_calls，序列化为 OpenAI 格式。"""
+        msg: dict = {"role": role, "content": content}
+        if tool_calls is not None:
+            msg["tool_calls"] = [
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {
+                        "name": tc.name,
+                        "arguments": tc.arguments,
+                    },
+                }
+                for tc in tool_calls
+            ]
+        self.messages.append(msg)
         self.total_tokens += tokens
+
+    def add_tool_result(self, call_id: str, result: str):
+        """添加工具执行结果消息。"""
+        self.messages.append({"role": "tool", "tool_call_id": call_id, "content": result})
 
     def get_messages(self) -> list[dict]:
         """获取所有消息。"""
