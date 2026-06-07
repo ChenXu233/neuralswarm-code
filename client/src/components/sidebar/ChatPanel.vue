@@ -38,13 +38,6 @@ function formatTime(dateStr: string) {
 
 <template>
   <div class="chat-panel">
-    <div class="panel-header">
-      <span class="panel-title">对话</span>
-      <button class="add-button" @click="$emit('create')">
-        <Plus :size="14" />
-      </button>
-    </div>
-
     <div class="search-box">
       <Search :size="12" />
       <input placeholder="搜索..." />
@@ -149,7 +142,7 @@ function formatTime(dateStr: string) {
 }
 
 .task-item.active {
-  background: #e6f7ff;
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
   border-left: 3px solid var(--color-accent);
 }
 

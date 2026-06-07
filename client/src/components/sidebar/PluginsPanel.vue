@@ -4,9 +4,6 @@ import { Puzzle } from 'lucide-vue-next'
 
 <template>
   <div class="plugins-panel">
-    <div class="panel-header">
-      <span class="panel-title">插件</span>
-    </div>
     <div class="empty-state">
       <Puzzle :size="32" />
       <p>暂无插件</p>

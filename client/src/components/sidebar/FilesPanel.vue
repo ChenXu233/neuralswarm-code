@@ -29,9 +29,6 @@ function toggleFolder(name: string) {
 
 <template>
   <div class="files-panel">
-    <div class="panel-header">
-      <span class="panel-title">文件</span>
-    </div>
     <div class="file-tree">
       <template v-for="file in files" :key="file.name">
         <div

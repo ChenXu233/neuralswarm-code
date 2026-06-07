@@ -95,7 +95,7 @@ defineEmits<{
 }
 
 .server-item.active {
-  background: #e6f7ff;
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
   border-left: 2px solid var(--color-accent);
 }
 
