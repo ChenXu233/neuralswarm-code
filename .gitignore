@@ -54,6 +54,9 @@ desktop/src-tauri/target/
 # Node
 node_modules/
 
+# Tauri generated
+desktop/src-tauri/gen/
+
 # OS
 .DS_Store
 Thumbs.db
