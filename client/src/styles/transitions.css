@@ -3,7 +3,6 @@
 .fade-leave-active {
   transition: opacity var(--transition-normal);
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -14,25 +13,51 @@
 .slide-leave-active {
   transition: transform var(--transition-normal), opacity var(--transition-normal);
 }
-
 .slide-enter-from {
   transform: translateY(10px);
   opacity: 0;
 }
-
 .slide-leave-to {
   transform: translateY(10px);
   opacity: 0;
 }
 
-/* 缩放 */
+/* 缩放进入 */
 .scale-enter-active,
 .scale-leave-active {
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
-
 .scale-enter-from,
 .scale-leave-to {
   transform: scale(0.95);
   opacity: 0;
+}
+
+/* 首页 slide-fade (带方向) */
+.slide-fade-enter-active {
+  transition: all 0.25s var(--ease-out);
+}
+.slide-fade-leave-active {
+  transition: all 0.2s ease-in;
+}
+.slide-fade-enter-from {
+  transform: translateX(20px);
+  opacity: 0;
+}
+.slide-fade-leave-to {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+/* 展开/折叠 */
+.expand-enter-active {
+  animation: expand-in var(--transition-normal) var(--ease-out);
+}
+.expand-leave-active {
+  animation: collapse-out var(--transition-fast) ease-in;
+}
+
+/* 消息入场 */
+.message-enter-active {
+  animation: message-in var(--transition-normal) var(--ease-out);
 }
