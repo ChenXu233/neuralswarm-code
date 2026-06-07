@@ -22,8 +22,9 @@ function formatTime(dateStr: string) {
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(hours / 24)
 
-  if (hours < 24) return `${hours}小时前`
-  return `${days}天前`
+  if (hours < 1) return 'just now'
+  if (hours < 24) return `${hours}h ago`
+  return `${days}d ago`
 }
 </script>
 
@@ -34,17 +35,18 @@ function formatTime(dateStr: string) {
       <div class="brand-section">
         <div class="logo">N</div>
         <h1 class="brand-name">NeuralSwarm</h1>
-        <p class="brand-desc">选择一个项目开始，<br>或创建新项目</p>
+        <p class="brand-desc">AI-Powered Development</p>
       </div>
 
       <!-- Divider -->
       <div class="divider"></div>
 
-      <!-- Right: Projects or Options -->
-      <div class="projects-section">
+      <!-- Right: Content -->
+      <div class="action-section">
         <Transition name="slide-fade" mode="out-in">
+          <!-- Projects list -->
           <div v-if="!showOptions" key="projects" class="projects-content">
-            <div class="section-label">最近项目</div>
+            <div class="section-label">RECENT</div>
             <div class="project-list">
               <div
                 v-for="project in projects"
@@ -53,53 +55,58 @@ function formatTime(dateStr: string) {
                 @click="emit('select', project)"
               >
                 <Folder :size="14" />
-                <span class="project-name">{{ project.name }}</span>
+                <span class="project-path">{{ project.name }}</span>
                 <span class="project-time">{{ formatTime(project.updated_at) }}</span>
+              </div>
+              <div v-if="projects.length === 0" class="empty-hint">
+                No recent projects
               </div>
             </div>
             <button class="open-btn" @click="showOptions = true">
-              <Plus :size="12" />
-              <span>打开项目</span>
+              Open...
             </button>
           </div>
 
+          <!-- Options page -->
           <div v-else key="options" class="options-content">
-            <div class="options-header">
-              <button class="back-btn" @click="showOptions = false">
-                <ArrowLeft :size="10" />
-              </button>
-              <span class="options-title">打开项目</span>
-            </div>
+            <div class="section-label">START A SESSION</div>
             <div class="options-list">
-              <div class="option-item">
-                <Plus :size="16" color="#1890ff" />
-                <div>
-                  <div class="option-title">新建项目</div>
-                  <div class="option-desc">创建一个新的工作空间</div>
-                </div>
-              </div>
               <div v-if="canOpenLocalFolder()" class="option-item">
-                <Folder :size="16" color="#52c41a" />
-                <div>
-                  <div class="option-title">打开本地文件夹</div>
-                  <div class="option-desc">从本地文件夹导入</div>
+                <Folder :size="16" />
+                <div class="option-info">
+                  <div class="option-title">Open Folder</div>
+                  <div class="option-desc">Browse a local directory</div>
                 </div>
+                <span class="option-shortcut">Ctrl+O</span>
               </div>
               <div v-else class="option-item">
-                <Globe :size="16" color="#52c41a" />
-                <div>
-                  <div class="option-title">连接云端项目</div>
-                  <div class="option-desc">浏览器只能操作云端项目</div>
+                <Globe :size="16" />
+                <div class="option-info">
+                  <div class="option-title">Connect Cloud</div>
+                  <div class="option-desc">Link a cloud project</div>
                 </div>
               </div>
-              <div class="option-item" @click="emit('global')">
-                <MessageSquare :size="16" color="#faad14" />
-                <div>
-                  <div class="option-title">全局模式</div>
-                  <div class="option-desc">不绑定项目，直接对话</div>
+              <div class="option-item">
+                <Plus :size="16" />
+                <div class="option-info">
+                  <div class="option-title">New Project</div>
+                  <div class="option-desc">Start from scratch</div>
                 </div>
+                <span class="option-shortcut">Ctrl+N</span>
+              </div>
+              <div class="option-item accent" @click="emit('global')">
+                <MessageSquare :size="16" />
+                <div class="option-info">
+                  <div class="option-title">Global Mode</div>
+                  <div class="option-desc">No project context</div>
+                </div>
+                <span class="option-shortcut">Ctrl+G</span>
               </div>
             </div>
+            <button class="back-link" @click="showOptions = false">
+              <ArrowLeft :size="12" />
+              Back
+            </button>
           </div>
         </Transition>
       </div>
@@ -113,208 +120,226 @@ function formatTime(dateStr: string) {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 48px;
 }
 
 .content-wrapper {
   display: flex;
   align-items: center;
-  gap: 40px;
-  max-width: 600px;
-  width: 100%;
+  gap: 56px;
 }
 
+/* --- Brand (Left) --- */
 .brand-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  min-width: 140px;
-  padding: 20px;
+  align-items: flex-end;
+  text-align: right;
+  min-width: 160px;
 }
 
 .logo {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   background: var(--color-primary);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-bg);
   font-size: 22px;
-  font-weight: 700;
+  font-weight: var(--font-semibold);
   margin-bottom: 12px;
 }
 
 .brand-name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
   color: var(--color-text);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .brand-desc {
-  font-size: 11px;
+  font-size: var(--text-sm);
   color: var(--color-text-tertiary);
-  line-height: 1.4;
 }
 
+/* --- Divider --- */
 .divider {
   width: 1px;
-  height: 160px;
+  height: 140px;
   background: var(--color-border);
-  align-self: center;
+  flex-shrink: 0;
 }
 
-.projects-section {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 320px;
+/* --- Action (Right) --- */
+.action-section {
+  min-width: 260px;
 }
 
 .section-label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
   color: var(--color-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
 }
 
+.projects-content,
+.options-content {
+  width: 100%;
+}
+
+/* --- Project List --- */
 .project-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .project-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--color-text-secondary);
+  transition: background-color var(--transition-fast);
 }
 
 .project-item:hover {
   background: var(--color-surface-hover);
 }
 
-.project-name {
-  font-size: 12px;
+.project-path {
+  font-size: var(--text-sm);
   color: var(--color-text);
   flex: 1;
 }
 
 .project-time {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--color-text-tertiary);
 }
 
+.empty-hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  padding: 8px;
+}
+
+/* --- Open Button --- */
 .open-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-bg);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: background-color var(--transition-fast);
 }
 
 .open-btn:hover {
   background: var(--color-primary-hover);
 }
 
-.options-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.back-btn {
-  padding: 3px 6px;
-  background: var(--color-surface-hover);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  color: var(--color-text-secondary);
-}
-
-.back-btn:hover {
-  background: var(--color-border);
-}
-
-.options-title {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
+/* --- Options --- */
 .options-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-width: 280px;
+  gap: 2px;
+  margin-bottom: 20px;
 }
 
 .option-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 0;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: background-color var(--transition-fast);
 }
 
-.option-item:hover .option-title {
+.option-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.option-item.accent {
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+.option-item.accent:hover {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.option-item.accent .option-title {
   color: var(--color-accent);
 }
 
+.option-info {
+  flex: 1;
+}
+
 .option-title {
-  font-size: 12px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   color: var(--color-text);
-  font-weight: 500;
-  transition: color var(--transition-fast);
 }
 
 .option-desc {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--color-text-tertiary);
+  margin-top: 1px;
 }
 
-/* Slide-fade transition */
-.slide-fade-enter-active {
-  transition: all 0.25s ease-out;
+.option-shortcut {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
 }
 
-.slide-fade-leave-active {
-  transition: all 0.2s ease-in;
+/* --- Back Link --- */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.slide-fade-enter-from {
-  transform: translateX(20px);
-  opacity: 0;
+.back-link:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
 }
 
-.slide-fade-leave-to {
-  transform: translateX(-20px);
-  opacity: 0;
-}
-
-.projects-content,
-.options-content {
-  width: 100%;
+/* --- Responsive --- */
+@media (max-width: 640px) {
+  .content-wrapper {
+    flex-direction: column;
+    gap: 28px;
+  }
+  .brand-section {
+    align-items: center;
+    text-align: center;
+  }
+  .divider {
+    width: 80px;
+    height: 1px;
+  }
 }
 </style>
