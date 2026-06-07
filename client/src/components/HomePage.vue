@@ -154,11 +154,15 @@ function formatTime(dateStr: string) {
   width: 1px;
   height: 160px;
   background: var(--color-border);
+  align-self: center;
 }
 
 .projects-section {
   flex: 1;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .section-label {
