@@ -1,15 +1,21 @@
 <script setup lang="ts">
-// Project selection will be implemented in Task 8
+import { ref } from 'vue'
+import ProjectView from './views/ProjectView.vue'
+import TaskView from './views/TaskView.vue'
+import type { Project } from './api/client'
+
+const selectedProject = ref<Project | null>(null)
 </script>
 
 <template>
   <div id="app">
-    <h1>NeuralSwarm</h1>
-    <p>Project view coming in Task 8</p>
+    <ProjectView v-if="!selectedProject" @select="selectedProject = $event" />
+    <TaskView v-else :project="selectedProject" @back="selectedProject = null" />
   </div>
 </template>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+#app { height: 100vh; }
 </style>

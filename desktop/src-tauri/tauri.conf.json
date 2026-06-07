@@ -1,0 +1,17 @@
+{
+  "productName": "NeuralSwarm",
+  "version": "0.1.0",
+  "identifier": "com.neuralswarm.app",
+  "build": {
+    "frontendDist": "../client/dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "cd ../client && npm run dev",
+    "beforeBuildCommand": "cd ../client && npm run build"
+  },
+  "app": {
+    "title": "NeuralSwarm",
+    "windows": [{ "title": "NeuralSwarm", "width": 1200, "height": 800 }],
+    "security": { "csp": null }
+  },
+  "plugins": { "dialog": {} }
+}
