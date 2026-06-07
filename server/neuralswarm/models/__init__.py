@@ -6,6 +6,7 @@ from neuralswarm.models.lock import Lock
 from neuralswarm.models.memory import GlobalMemory, ProjectMemory
 from neuralswarm.models.project import Project
 from neuralswarm.models.task import Task
+from neuralswarm.models.user import User
 
 __all__ = [
     "Agent",
@@ -20,4 +21,5 @@ __all__ = [
     "ProjectMemory",
     "Task",
     "TaskStatus",
+    "User",
 ]
