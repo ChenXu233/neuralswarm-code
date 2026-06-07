@@ -1,21 +1,40 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import ProjectView from './views/ProjectView.vue'
-import TaskView from './views/TaskView.vue'
+import { useTheme } from './composables/useTheme'
+import HomePage from './components/HomePage.vue'
 import type { Project } from './api/client'
 
+// 初始化主题
+useTheme()
+
 const selectedProject = ref<Project | null>(null)
+const projects = ref<Project[]>([])
+
+function handleSelectProject(project: Project) {
+  selectedProject.value = project
+}
+
+function handleGlobalMode() {
+  selectedProject.value = null
+  // TODO: 进入全局模式对话
+}
 </script>
 
 <template>
   <div id="app">
-    <ProjectView v-if="!selectedProject" @select="selectedProject = $event" />
-    <TaskView v-else :project="selectedProject" @back="selectedProject = null" />
+    <HomePage
+      v-if="!selectedProject"
+      :projects="projects"
+      @select="handleSelectProject"
+      @global="handleGlobalMode"
+    />
+    <!-- TODO: TaskView will be integrated in Task 9 -->
+    <div v-else>
+      <p>TaskView will be here</p>
+    </div>
   </div>
 </template>
 
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-#app { height: 100vh; }
+/* Global styles are in base.css */
 </style>
