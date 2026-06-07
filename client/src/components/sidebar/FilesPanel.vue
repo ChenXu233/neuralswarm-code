@@ -8,6 +8,8 @@ interface FileItem {
   children?: FileItem[]
 }
 
+const workspaces = ref(['neuralswarm-core', 'api-server'])
+
 const files = ref<FileItem[]>([
   { name: 'src', type: 'folder', children: [
     { name: 'main.ts', type: 'file' },
@@ -29,6 +31,21 @@ function toggleFolder(name: string) {
 
 <template>
   <div class="files-panel">
+    <div class="panel-header">
+      <span class="panel-title">EXPLORER</span>
+    </div>
+
+    <div class="workspace-section">
+      <div
+        v-for="ws in workspaces"
+        :key="ws"
+        class="workspace-item"
+      >
+        <Folder :size="12" />
+        <span>{{ ws }}</span>
+      </div>
+    </div>
+
     <div class="file-tree">
       <template v-for="file in files" :key="file.name">
         <div
@@ -37,7 +54,7 @@ function toggleFolder(name: string) {
         >
           <ChevronRight
             v-if="file.type === 'folder'"
-            :size="12"
+            :size="10"
             :class="['chevron', { expanded: expandedFolders.has(file.name) }]"
           />
           <Folder v-if="file.type === 'folder'" :size="14" />
@@ -51,7 +68,7 @@ function toggleFolder(name: string) {
           <div
             v-for="child in file.children"
             :key="child.name"
-            class="file-item"
+            class="file-item child"
           >
             <File :size="14" />
             <span>{{ child.name }}</span>
@@ -70,16 +87,29 @@ function toggleFolder(name: string) {
 }
 
 .panel-header {
-  padding: 12px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 8px 12px;
 }
 
 .panel-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-tertiary);
+  letter-spacing: 1.5px;
+}
+
+.workspace-section {
+  padding: 4px 8px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.workspace-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .file-tree {
@@ -91,27 +121,30 @@ function toggleFolder(name: string) {
 .file-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: 4px;
+  padding: 3px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 12px;
-  color: var(--color-text);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  transition: background-color var(--transition-fast);
 }
 
 .file-item:hover {
   background: var(--color-surface-hover);
 }
 
+.file-item.child {
+  padding-left: 24px;
+}
+
 .chevron {
   transition: transform var(--transition-fast);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
 }
 
 .chevron.expanded {
   transform: rotate(90deg);
-}
-
-.sub-items {
-  padding-left: 16px;
 }
 </style>

@@ -19,26 +19,26 @@ defineProps<{
 <style scoped>
 .sidebar {
   width: var(--sidebar-width);
-  background-color: var(--color-surface);
+  background: var(--color-surface);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
 }
 
 .sidebar-header {
-  padding: 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 36px;
 }
 
 .sidebar-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-tertiary);
+  letter-spacing: 1.5px;
 }
 
 .sidebar-content {

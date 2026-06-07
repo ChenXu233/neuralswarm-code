@@ -6,7 +6,7 @@ import { Puzzle } from 'lucide-vue-next'
   <div class="plugins-panel">
     <div class="empty-state">
       <Puzzle :size="32" />
-      <p>暂无插件</p>
+      <p>No plugins yet</p>
     </div>
   </div>
 </template>
@@ -16,19 +16,6 @@ import { Puzzle } from 'lucide-vue-next'
   display: flex;
   flex-direction: column;
   height: 100%;
-}
-
-.panel-header {
-  padding: 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.panel-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .empty-state {
@@ -42,6 +29,6 @@ import { Puzzle } from 'lucide-vue-next'
 }
 
 .empty-state p {
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 </style>
