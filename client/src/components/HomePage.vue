@@ -163,6 +163,7 @@ function formatTime(dateStr: string) {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  max-width: 320px;
 }
 
 .section-label {
@@ -256,6 +257,7 @@ function formatTime(dateStr: string) {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: 280px;
 }
 
 .option-item {

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralSwarm — Logo 设计探索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Noto+Sans+SC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #FBF7F2;
+            --text: #2D2015;
+            --accent: #D4783B;
+            --accent-soft: #E8A96C;
+            --warm-gray: #8B7355;
+            --card-bg: #F5F0E9;
+            --divider: rgba(45, 32, 21, 0.15);
+            --tag-bg: rgba(212, 120, 59, 0.1);
+            --tag-text: #B5652E;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+        .logo-card {
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2.5rem 2rem 2rem;
+        }
+        .logo-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 24px 48px rgba(45, 32, 21, 0.12);
+        }
+
+        .logo-canvas {
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .logo-card:hover .logo-canvas {
+            transform: scale(1.05);
+        }
+
+        .logo-aura {
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(circle, rgba(212,120,59,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .logo-card:hover .logo-aura {
+            opacity: 1;
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 0.675rem;
+            font-weight: 500;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .divider-line {
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            opacity: 0.4;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            margin: 0 auto;
+        }
+        .logo-card:hover .divider-line {
+            width: 60%;
+        }
+
+        .color-swatch {
+            display: inline-block;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        @keyframes float1 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        @keyframes float2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+        @keyframes rotate-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes dash-flow { to { stroke-dashoffset: -24; } }
+
+        .animate-float1 { animation: float1 4s ease-in-out infinite; }
+        .animate-float2 { animation: float2 5s ease-in-out infinite; }
+        .animate-pulse { animation: pulse 3s ease-in-out infinite; }
+        .animate-rotate-slow { animation: rotate-slow 24s linear infinite; transform-origin: center; }
+
+        /* Dark mode toggle */
+        .dark-mode body { --bg: #1A1816; --text: #F0E8DE; --card-bg: #252220; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // ─── V1: Mesh Topology ───
+        const MeshTopology = ({ animate }) => (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Connections */}
+                <path d="M 38 32 Q 52 29, 68 42" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+                <path d="M 68 42 Q 62 60, 48 72" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+                <path d="M 48 72 Q 35 55, 38 32" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+                {/* Satellite connections */}
+                <path d="M 38 32 Q 24 42, 22 58" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.45"/>
+                <path d="M 68 42 Q 80 48, 78 62" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.45"/>
+                <path d="M 48 72 Q 52 84, 44 88" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.3"/>
+                <path d="M 38 32 Q 46 18, 56 22" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.3"/>
+                {/* Primary nodes */}
+                <circle cx="38" cy="32" r="5" fill="currentColor"/>
+                <circle cx="68" cy="42" r="5.5" fill="currentColor"/>
+                <circle cx="48" cy="72" r="4.5" fill="currentColor"/>
+                {/* Secondary nodes */}
+                <circle cx="22" cy="58" r="2.8" fill="currentColor" opacity="0.5"/>
+                <circle cx="78" cy="62" r="3" fill="currentColor" opacity="0.55"/>
+                <circle cx="44" cy="88" r="2" fill="currentColor" opacity="0.3"/>
+                <circle cx="56" cy="22" r="2.2" fill="currentColor" opacity="0.35"/>
+                {/* Pulse dot on central node */}
+                {animate && <circle cx="68" cy="42" r="9" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.3" className="animate-pulse"/>}
+            </svg>
+        );
+
+        // ─── V2: Swarm Flow ───
+        const SwarmFlow = ({ animate }) => (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Guiding flow line (subtle) */}
+                <path d="M 16 74 Q 35 58, 50 50 T 84 30" stroke="currentColor" strokeWidth="0.6" opacity="0.18" fill="none"/>
+                {/* Capsule swarm */}
+                <g fill="currentColor">
+                    <rect x="14" y="70" width="9" height="4" rx="2" transform="rotate(-42, 18.5, 72)"/>
+                    <rect x="24" y="60" width="11" height="4.5" rx="2.25" transform="rotate(-32, 29.5, 62.25)"/>
+                    <rect x="35" y="52" width="13" height="5" rx="2.5" transform="rotate(-18, 41.5, 54.5)"/>
+                    <rect x="46" y="46" width="15" height="6" rx="3" transform="rotate(-5, 53.5, 49)"/>
+                    <rect x="57" y="40" width="14" height="5.5" rx="2.75" transform="rotate(10, 64, 42.75)"/>
+                    <rect x="67" y="35" width="12" height="4.5" rx="2.25" transform="rotate(25, 73, 37.25)"/>
+                    <rect x="76" y="31" width="10" height="4" rx="2" transform="rotate(38, 81, 33)"/>
+                </g>
+                {/* Trailing dots */}
+                <g fill="currentColor" opacity="0.4">
+                    <circle cx="10" cy="78" r="1.5"/>
+                    <circle cx="6" cy="82" r="1"/>
+                </g>
+                {/* Leading dot */}
+                {animate && <circle cx="86" cy="28" r="2.5" fill="currentColor" className="animate-pulse"/>}
+                {!animate && <circle cx="86" cy="28" r="2.5" fill="currentColor"/>}
+            </svg>
+        );
+
+        // ─── V3: Neural Constellation ───
+        const NeuralConstellation = ({ animate }) => (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Inner ring dots (8) */}
+                <g fill="currentColor">
+                    <circle cx="64" cy="50" r="2.8"/><circle cx="59.9" cy="59.9" r="2.8"/>
+                    <circle cx="50" cy="64" r="2.8"/><circle cx="40.1" cy="59.9" r="2.8"/>
+                    <circle cx="36" cy="50" r="2.8"/><circle cx="40.1" cy="40.1" r="2.8"/>
+                    <circle cx="50" cy="36" r="2.8"/><circle cx="59.9" cy="40.1" r="2.8"/>
+                </g>
+                {/* Inner connections (selective) */}
+                <g stroke="currentColor" strokeWidth="1.2" opacity="0.5">
+                    <line x1="64" y1="50" x2="59.9" y2="59.9"/>
+                    <line x1="59.9" y1="59.9" x2="50" y2="64"/>
+                    <line x1="50" y1="64" x2="40.1" y2="59.9"/>
+                    <line x1="40.1" y1="40.1" x2="50" y2="36"/>
+                    <line x1="50" y1="36" x2="59.9" y2="40.1"/>
+                    <line x1="50" y1="36" x2="40.1" y2="40.1"/>
+                    <line x1="40.1" y1="59.9" x2="36" y2="50"/>
+                </g>
+                {/* Outer ring dots (14) */}
+                <g fill="currentColor" opacity="0.65">
+                    <circle cx="78" cy="50" r="2.2"/><circle cx="75.2" cy="62.2" r="2.2"/>
+                    <circle cx="67.5" cy="72" r="2.2"/><circle cx="56.2" cy="77.3" r="2.2"/>
+                    <circle cx="43.8" cy="77.3" r="2.2"/><circle cx="32.5" cy="72" r="2.2"/>
+                    <circle cx="24.8" cy="62.2" r="2.2"/><circle cx="22" cy="50" r="2.2"/>
+                    <circle cx="24.8" cy="37.8" r="2.2"/><circle cx="32.5" cy="28" r="2.2"/>
+                    <circle cx="43.8" cy="22.7" r="2.2"/><circle cx="56.2" cy="22.7" r="2.2"/>
+                    <circle cx="67.5" cy="28" r="2.2"/><circle cx="75.2" cy="37.8" r="2.2"/>
+                </g>
+                {/* Outer inter-ring connections (dashed) */}
+                <g stroke="currentColor" strokeWidth="0.7" strokeDasharray="2 3" opacity="0.25">
+                    <line x1="64" y1="50" x2="78" y2="50"/>
+                    <line x1="50" y1="64" x2="50" y2="77.3"/>
+                    <line x1="36" y1="50" x2="22" y2="50"/>
+                    <line x1="50" y1="36" x2="50" y2="22.7"/>
+                </g>
+                {/* Center void accent */}
+                {animate && <circle cx="50" cy="50" r="6" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.25" className="animate-pulse"/>}
+            </svg>
+        );
+
+        // ─── V4: Bridge Router ───
+        const BridgeRouter = ({ animate }) => (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Left cluster (client side) */}
+                <g fill="currentColor">
+                    <circle cx="32" cy="42" r="4.2"/>
+                    <circle cx="28" cy="56" r="3.6"/>
+                    <circle cx="37" cy="59" r="3"/>
+                </g>
+                <g stroke="currentColor" strokeWidth="1.4" opacity="0.45">
+                    <line x1="32" y1="42" x2="28" y2="56"/>
+                    <line x1="28" y1="56" x2="37" y2="59"/>
+                    <line x1="32" y1="42" x2="37" y2="59"/>
+                </g>
+                {/* Right element (server side - hexagon) */}
+                <polygon points="68,36 80,43 80,57 68,64 56,57 56,43"
+                    fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/>
+                <circle cx="68" cy="50" r="3.5" fill="currentColor"/>
+                {/* Bridge connection */}
+                <path d="M 37 50 Q 50 42, 56 46" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+                {/* Data dots on bridge */}
+                <g fill="currentColor">
+                    <circle cx="42" cy="47" r="1.8" opacity="0.7"/>
+                    {animate && <circle cx="46" cy="46" r="2" className="animate-pulse"/>}
+                    {!animate && <circle cx="46" cy="46" r="2" opacity="0.8"/>}
+                    <circle cx="51" cy="45.5" r="1.5" opacity="0.5"/>
+                </g>
+                {/* Subtle orbit around hexagon */}
+                {animate && <circle cx="68" cy="50" r="18" fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.15" className="animate-rotate-slow" strokeDasharray="3 5"/>}
+            </svg>
+        );
+
+        // ─── V5: Hive Mind ───
+        const HiveMind = ({ animate }) => (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <polygon id="hexcell" points="0,-9.5 8.2,-4.75 8.2,4.75 0,9.5 -8.2,4.75 -8.2,-4.75"
+                        fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+                    <polygon id="hexcell-filled" points="0,-9.5 8.2,-4.75 8.2,4.75 0,9.5 -8.2,4.75 -8.2,-4.75"
+                        fill="currentColor" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+                </defs>
+                {/* Honeycomb layout */}
+                <use href="#hexcell" x="50" y="50"/>
+                <use href="#hexcell" x="66.4" y="50"/>
+                <use href="#hexcell" x="33.6" y="50"/>
+                <use href="#hexcell" x="58.2" y="35.75"/>
+                <use href="#hexcell" x="41.8" y="35.75"/>
+                <use href="#hexcell" x="58.2" y="64.25"/>
+                <use href="#hexcell-filled" x="41.8" y="64.25"/>
+                {/* Accent dots at outer vertices */}
+                <g fill="currentColor" opacity="0.35">
+                    <circle cx="50" cy="31.5" r="1.5"/><circle cx="74.6" cy="45.25" r="1.5"/>
+                    <circle cx="74.6" cy="54.75" r="1.5"/><circle cx="25.4" cy="45.25" r="1.5"/>
+                    <circle cx="25.4" cy="54.75" r="1.5"/><circle cx="50" cy="68.5" r="1.5"/>
+                </g>
+                {/* Pulse on filled cell */}
+                {animate && <circle cx="41.8" cy="64.25" r="12" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.2" className="animate-pulse"/>}
+            </svg>
+        );
+
+        // ─── V6: Emergence ───
+        const Emergence = ({ animate }) => (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Center: solid */}
+                <circle cx="50" cy="50" r="4" fill="currentColor"/>
+                {/* Ring 1: 270° arc */}
+                <path d="M 50 36 A 14 14 0 1 1 36 50" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                {/* Ring 2: two arcs with gap */}
+                <path d="M 50 26 A 24 24 0 0 1 63 38" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                <path d="M 37 62 A 24 24 0 0 1 26 50" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                <path d="M 74 50 A 24 24 0 0 1 63 62" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                {/* Ring 3: scattered dots at r~32 */}
+                <g fill="currentColor">
+                    <circle cx="82" cy="50" r="2.5"/><circle cx="78" cy="66" r="2.2"/>
+                    <circle cx="66" cy="78" r="2"/><circle cx="50" cy="82" r="2.5"/>
+                    <circle cx="34" cy="78" r="2"/><circle cx="22" cy="66" r="2.2"/>
+                    <circle cx="18" cy="50" r="2"/><circle cx="50" cy="18" r="2"/>
+                    <circle cx="58" cy="19" r="1.8"/><circle cx="72" cy="28" r="1.5"/>
+                </g>
+                {/* Subtle dash ring */}
+                <circle cx="50" cy="50" r="35" stroke="currentColor" strokeWidth="0.6" strokeDasharray="1.5 4" opacity="0.2" fill="none"/>
+                {animate && <circle cx="50" cy="36" r="3" fill="currentColor" className="animate-pulse"/>}
+            </svg>
+        );
+
+        // ─── V7: NS Monogram ───
+        const NSMonogram = ({ animate }) => (
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* N: three bold strokes */}
+                <line x1="28" y1="28" x2="28" y2="72" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round"/>
+                <line x1="28" y1="28" x2="58" y2="72" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round"/>
+                <line x1="58" y1="28" x2="58" y2="72" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round"/>
+                {/* S: flowing curve integrated with N */}
+                <path d="M 72 34 Q 62 24, 52 34 Q 44 43, 52 52 Q 62 60, 72 50" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                {/* Connection point: S touches N */}
+                <circle cx="58" cy="55" r="3.5" fill="currentColor" opacity="0.7"/>
+                {/* Subtle accent dot */}
+                <circle cx="72" cy="50" r="2.5" fill="currentColor"/>
+                {animate && <circle cx="28" cy="28" r="5" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.35" className="animate-pulse"/>}
+            </svg>
+        );
+
+        // ─── Logo Data ───
+        const logos = [
+            {
+                Component: MeshTopology,
+                title: "Mesh 拓扑",
+                subtitle: "网格拓扑 · 对等互联",
+                philosophy: "三个不等大小的节点以不对称三角布局，通过曲线连接形成 Mesh 网络。最大节点代表中央调度器，小节点代表 Agent 实例。整体暗示去中心化与集中式协同的平衡。",
+                tags: ["Mesh网络", "拓扑", "调度"],
+                concept: "架构核心"
+            },
+            {
+                Component: SwarmFlow,
+                title: "Swarm 流动",
+                subtitle: "群蜂流动 · 方向性",
+                philosophy: "七个胶囊形元素沿 S 曲线从下至上游动，大小渐变形成深度错觉。每个胶囊代表一个 Agent，群体朝同一方向运动——这正是群体智能的可视化隐喻。",
+                tags: ["群体智能", "流动", "方向"],
+                concept: "智能行为"
+            },
+            {
+                Component: NeuralConstellation,
+                title: "Neural 星群",
+                subtitle: "神经星座 · 激活模式",
+                philosophy: "双层同心圆点阵围绕中心虚空排列，内圈 8 点、外圈 14 点。选择性连线暗示神经突触连接。中心虚空代表尚未被激活的潜在智能——等待任务到来。",
+                tags: ["神经网络", "激活", "模式"],
+                concept: "认知架构"
+            },
+            {
+                Component: BridgeRouter,
+                title: "Bridge 路由",
+                subtitle: "桥接路由 · 两极连接",
+                philosophy: "左侧有机点簇（客户端）与右侧几何六边形（服务器）通过粗犷弧线桥梁连接。桥上的脉冲点表示数据在 Bridge Router 中传输。两端形态迥异，却由一个统一的桥接层连通。",
+                tags: ["桥接", "路由", "客户端-服务器"],
+                concept: "基础设施"
+            },
+            {
+                Component: HiveMind,
+                title: "Hive 蜂巢",
+                subtitle: "蜂巢思维 · 结构化群体",
+                philosophy: "七个六边形以蜂巢布局排列，仅左下角一个填充实色，其余为线框。六边形天然暗示高效组织与分布式网络，而只有一个'激活'的单元格创造了不对称的视觉张力。",
+                tags: ["蜂巢", "结构化", "分布式"],
+                concept: "组织形式"
+            },
+            {
+                Component: Emergence,
+                title: "Emergence 涌现",
+                subtitle: "涌现 · 从部分到整体",
+                philosophy: "中心实心圆向外逐渐解体：完整弧线 → 分段弧线 → 散落圆点。这一渐进过程完美诠释了 NeuralSwarm 的核心理念——从离散的 Agent 计算中涌现出超越单个 LLM 的智能。",
+                tags: ["涌现", "整体论", "渐进"],
+                concept: "设计哲学"
+            },
+            {
+                Component: NSMonogram,
+                title: "NS 印记",
+                subtitle: "字母融合 · 品牌标识",
+                philosophy: "几何化的 'N'（三根粗线）与流动的 'S'（有机曲线）交织。N 代表 Neural 的结构性，S 代表 Swarm 的流动性——两者在交汇处通过一个连接点统一，暗示结构与流动的共生。",
+                tags: ["品牌标识", "字母", "融合"],
+                concept: "品牌识别"
+            }
+        ];
+
+        // ─── Main Showcase ───
+        const LogoShowcase = () => {
+            const [animate, setAnimate] = useState(false);
+
+            useEffect(() => {
+                // Start animations after mount
+                const t = setTimeout(() => setAnimate(true), 600);
+                return () => clearTimeout(t);
+            }, []);
+
+            return (
+                <div className="min-h-screen flex flex-col items-center py-16 px-6" style={{background: 'var(--bg)'}}>
+
+                    {/* Header */}
+                    <div className="text-center mb-16 max-w-3xl">
+                        <div className="inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full" style={{background: 'var(--tag-bg)'}}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{background: 'var(--accent)'}}></span>
+                            <span className="text-xs font-medium tracking-wider uppercase" style={{color: 'var(--tag-text)'}}>
+                                Logo Design Exploration • 7 Variants
+                            </span>
+                        </div>
+                        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4" style={{color: 'var(--text)'}}>
+                            NeuralSwarm
+                        </h1>
+                        <p className="text-sm tracking-widest uppercase opacity-45 mb-6" style={{color: 'var(--warm-gray)'}}>
+                            异构多智能体 Mesh 调度系统
+                        </p>
+                        <p className="text-base leading-relaxed max-w-xl mx-auto opacity-65" style={{color: 'var(--text)'}}>
+                            几何与有机的融合 · 动感前卫而克制 · 适用于全场景的 AI 品牌标识
+                        </p>
+                    </div>
+
+                    {/* Logo Grid */}
+                    <div className="max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+                        {logos.map((logo, idx) => (
+                            <div key={idx} className="logo-card flex flex-col items-center cursor-pointer group">
+
+                                {/* Concept badge */}
+                                <div className="self-start mb-4">
+                                    <span className="tag">{logo.concept}</span>
+                                </div>
+
+                                {/* Canvas */}
+                                <div className="w-56 h-56 mb-8 flex items-center justify-center relative">
+                                    <div className="logo-aura"></div>
+                                    <div className="w-28 h-28 relative z-10 logo-canvas" style={{color: 'var(--text)'}}>
+                                        <logo.Component animate={animate} />
+                                    </div>
+                                </div>
+
+                                {/* Info */}
+                                <div className="text-center w-full">
+                                    <h2 className="text-xl font-semibold tracking-wide mb-1" style={{color: 'var(--text)'}}>
+                                        {logo.title}
+                                    </h2>
+                                    <h3 className="text-xs tracking-widest uppercase mb-5 opacity-45" style={{color: 'var(--warm-gray)'}}>
+                                        {logo.subtitle}
+                                    </h3>
+                                    <p className="text-sm leading-relaxed text-left font-light" style={{color: 'var(--text)', opacity: 0.72}}>
+                                        {logo.philosophy}
+                                    </p>
+                                </div>
+
+                                {/* Tags */}
+                                <div className="flex gap-2 mt-5 flex-wrap justify-center">
+                                    {logo.tags.map((t, i) => (
+                                        <span key={i} className="tag" style={{fontSize: '0.65rem'}}>{t}</span>
+                                    ))}
+                                </div>
+
+                                {/* Divider */}
+                                <div className="divider-line mt-6"></div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Color Themes Section */}
+                    <div className="max-w-5xl w-full mb-20">
+                        <div className="text-center mb-12">
+                            <h2 className="text-2xl font-semibold tracking-wide mb-3" style={{color: 'var(--text)'}}>
+                                色彩适配
+                            </h2>
+                            <p className="text-sm opacity-50" style={{color: 'var(--warm-gray)'}}>
+                                所有 Logo 使用 currentColor，可适配任意色彩方案
+                            </p>
+                        </div>
+
+                        {/* Color theme preview cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {[
+                                { name: '墨黑', bg: '#1A1816', fg: '#F0E8DE', desc: '专业 / 权威' },
+                                { name: '暖棕', bg: '#FBF7F2', fg: '#2D2015', desc: '温暖 / 亲和' },
+                                { name: '琥珀', bg: '#FBF7F2', fg: '#D4783B', desc: '动感 / 前卫' },
+                                { name: '深蓝', bg: '#0F172A', fg: '#93C5FD', desc: '冷静 / 技术' },
+                            ].map((theme, i) => (
+                                <div key={i} className="rounded-xl overflow-hidden" style={{background: theme.bg, border: '1px solid rgba(0,0,0,0.06)'}}>
+                                    <div className="p-5 flex items-center justify-center h-24" style={{color: theme.fg}}>
+                                        <div className="w-14 h-14">
+                                            <MeshTopology animate={animate} />
+                                        </div>
+                                    </div>
+                                    <div className="px-4 py-3 text-center" style={{background: 'rgba(0,0,0,0.03)'}}>
+                                        <div className="text-sm font-medium" style={{color: theme.fg === '#F0E8DE' ? '#F0E8DE' : '#2D2015'}}>{theme.name}</div>
+                                        <div className="text-xs opacity-50 mt-0.5" style={{color: theme.fg === '#F0E8DE' ? '#F0E8DE' : '#2D2015'}}>{theme.desc}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Scale Test Section */}
+                    <div className="max-w-5xl w-full mb-20">
+                        <div className="text-center mb-12">
+                            <h2 className="text-2xl font-semibold tracking-wide mb-3" style={{color: 'var(--text)'}}>
+                                缩放测试
+                            </h2>
+                            <p className="text-sm opacity-50" style={{color: 'var(--warm-gray)'}}>
+                                从 Favicon 到应用图标，Mesh Topology 变体在各种尺寸下均保持清晰可辨
+                            </p>
+                        </div>
+                        <div className="flex items-end justify-center gap-8 flex-wrap">
+                            {[16, 24, 32, 64, 128, 256].map(size => (
+                                <div key={size} className="flex flex-col items-center gap-2">
+                                    <div className="flex items-center justify-center rounded-lg p-2" style={{background: 'var(--card-bg)', width: Math.max(size + 32, 60), height: Math.max(size + 32, 60)}}>
+                                        <div style={{width: size, height: size, color: 'var(--text)'}}>
+                                            <MeshTopology animate={false} />
+                                        </div>
+                                    </div>
+                                    <span className="text-xs opacity-40 font-mono">{size}px</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Recommendation */}
+                    <div className="max-w-3xl w-full text-center mb-8 p-8 rounded-2xl" style={{background: 'var(--card-bg)'}}>
+                        <div className="text-xs tracking-widest uppercase mb-4 opacity-50" style={{color: 'var(--accent)'}}>
+                            推荐方向
+                        </div>
+                        <h3 className="text-xl font-semibold mb-4" style={{color: 'var(--text)'}}>
+                            Mesh Topology + NS Monogram
+                        </h3>
+                        <p className="text-sm leading-relaxed opacity-65" style={{color: 'var(--text)'}}>
+                            <strong>Mesh Topology</strong>（左上）最能体现 NeuralSwarm 的架构本质——Mesh 网络拓扑。
+                            它简洁到极致却意涵丰富，缩放至 16px 仍清晰可辨。
+                            建议作为主 Logo。<br/><br/>
+                            <strong>NS Monogram</strong>（右下）则适合作为 App 图标或品牌印记使用，
+                            在需要更强品牌识别度的场景中发挥价值。
+                            两个可组合使用，形成完整品牌体系。
+                        </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center mt-12">
+                        <p className="font-mono text-xs opacity-35 tracking-widest" style={{color: 'var(--warm-gray)'}}>
+                            NeuralSwarm Logo Exploration • 2026
+                        </p>
+                    </div>
+
+                </div>
+            );
+        };
+
+        ReactDOM.render(<LogoShowcase />, document.getElementById('root'));
+    </script>
+</body>
+</html>

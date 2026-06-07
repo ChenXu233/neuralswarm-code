@@ -1,0 +1,20 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bridge Router: Connecting two domains -->
+  <!-- Left cluster (client side) -->
+  <g fill="currentColor">
+    <circle cx="32" cy="42" r="4.2"/><circle cx="28" cy="56" r="3.6"/><circle cx="37" cy="59" r="3"/>
+  </g>
+  <g stroke="currentColor" stroke-width="1.4" opacity="0.45">
+    <line x1="32" y1="42" x2="28" y2="56"/><line x1="28" y1="56" x2="37" y2="59"/><line x1="32" y1="42" x2="37" y2="59"/>
+  </g>
+  <!-- Right element (server side - hexagon) -->
+  <polygon points="68,36 80,43 80,57 68,64 56,57 56,43"
+    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="68" cy="50" r="3.5" fill="currentColor"/>
+  <!-- Bridge connection -->
+  <path d="M 37 50 Q 50 42, 56 46" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+  <!-- Data dots on bridge -->
+  <circle cx="42" cy="47" r="1.8" fill="currentColor" opacity="0.7"/>
+  <circle cx="46" cy="46" r="2" fill="currentColor" opacity="0.8"/>
+  <circle cx="51" cy="45.5" r="1.5" fill="currentColor" opacity="0.5"/>
+</svg>
