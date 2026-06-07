@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
-import Sidebar from '../components/layout/Sidebar.vue'
 import MainContent from '../components/layout/MainContent.vue'
-import ChatPanel from '../components/sidebar/ChatPanel.vue'
-import FilesPanel from '../components/sidebar/FilesPanel.vue'
-import PluginsPanel from '../components/sidebar/PluginsPanel.vue'
-import SettingsPanel from '../components/sidebar/SettingsPanel.vue'
 import ChatMessage from '../components/ChatMessage.vue'
 import ToolCall from '../components/ToolCall.vue'
 import DiffView from '../components/chat/DiffView.vue'
@@ -18,15 +13,13 @@ import type { Project } from '../api/client'
 
 const props = defineProps<{
   project: Project
-  activePanel: 'chat' | 'files' | 'plugins' | 'settings' | null
 }>()
 
 const emit = defineEmits<{
   back: []
-  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'settings' | null]
 }>()
 
-const { tasks, currentTask, loading, submit, loadTasks } = useTask()
+const { currentTask, loading, submit } = useTask()
 
 const activeTaskId = computed(() => currentTask.value?.id || '')
 const { events, connected } = useWebSocket(activeTaskId)
@@ -60,85 +53,51 @@ const taskStatus = computed(() => {
   return statusEvent?.data.status || currentTask.value?.status || 'pending'
 })
 
-const servers = ref([
-  { url: 'localhost:8000', status: 'connected' as const },
-])
-
 async function handleSubmit(text: string) {
   await submit(props.project.id, text)
 }
-
-loadTasks(props.project.id)
 </script>
 
 <template>
-  <div class="task-view">
-    <Sidebar
-      v-if="activePanel && activePanel !== 'settings'"
-      :title="activePanel === 'chat' ? 'Chat' : activePanel === 'files' ? 'Files' : 'Plugins'"
-    >
-      <ChatPanel
-        v-if="activePanel === 'chat'"
-        :tasks="tasks"
-        :active-task-id="activeTaskId"
-        @select="currentTask = $event"
-      />
-      <FilesPanel v-else-if="activePanel === 'files'" />
-      <PluginsPanel v-else />
-    </Sidebar>
+  <MainContent>
+    <div class="chat-header">
+      <button class="back-btn" @click="emit('back')">
+        <ArrowLeft :size="16" />
+      </button>
+      <span class="task-title">{{ project.name }}</span>
+      <StatusDot :status="taskStatus" />
+      <span class="ws-status">{{ connected ? 'connected' : 'disconnected' }}</span>
+    </div>
 
-    <SettingsPanel
-      v-else-if="activePanel === 'settings'"
-      :servers="servers"
-      active-server="localhost:8000"
-    />
+    <div class="messages-area">
+      <template v-for="(msg, i) in messages" :key="i">
+        <ChatMessage
+          v-if="msg.type === 'message'"
+          role="assistant"
+          :content="msg.data.content"
+        />
+        <ToolCall
+          v-else-if="msg.type === 'tool_call'"
+          :tool="msg.data.tool"
+          :args="msg.data.args"
+          :output="msg.data.output"
+        />
+        <DiffView
+          v-else-if="msg.type === 'diff'"
+          :tool="msg.data.tool"
+          :file-path="msg.data.filePath"
+          :lines="msg.data.lines"
+          :added-count="msg.data.addedCount"
+          :removed-count="msg.data.removedCount"
+        />
+      </template>
+    </div>
 
-    <MainContent>
-      <div class="chat-header">
-        <button class="back-btn" @click="emit('back')">
-          <ArrowLeft :size="16" />
-        </button>
-        <span class="task-title">{{ project.name }}</span>
-        <StatusDot :status="taskStatus" />
-        <span class="ws-status">{{ connected ? 'connected' : 'disconnected' }}</span>
-      </div>
-
-      <div class="messages-area">
-        <template v-for="(msg, i) in messages" :key="i">
-          <ChatMessage
-            v-if="msg.type === 'message'"
-            role="assistant"
-            :content="msg.data.content"
-          />
-          <ToolCall
-            v-else-if="msg.type === 'tool_call'"
-            :tool="msg.data.tool"
-            :args="msg.data.args"
-            :output="msg.data.output"
-          />
-          <DiffView
-            v-else-if="msg.type === 'diff'"
-            :tool="msg.data.tool"
-            :file-path="msg.data.filePath"
-            :lines="msg.data.lines"
-            :added-count="msg.data.addedCount"
-            :removed-count="msg.data.removedCount"
-          />
-        </template>
-      </div>
-
-      <ChatInput :loading="loading" @submit="handleSubmit" />
-    </MainContent>
-  </div>
+    <ChatInput :loading="loading" @submit="handleSubmit" />
+  </MainContent>
 </template>
 
 <style scoped>
-.task-view {
-  display: flex;
-  flex: 1;
-  background: var(--color-bg);
-}
-
 .chat-header {
   padding: 10px 16px;
   border-bottom: 1px solid var(--color-border);

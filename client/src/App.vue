@@ -2,15 +2,27 @@
 import { ref } from 'vue'
 import { useTheme } from './composables/useTheme'
 import ActivityBar from './components/layout/ActivityBar.vue'
+import Sidebar from './components/layout/Sidebar.vue'
+import ChatPanel from './components/sidebar/ChatPanel.vue'
+import FilesPanel from './components/sidebar/FilesPanel.vue'
+import PluginsPanel from './components/sidebar/PluginsPanel.vue'
+import SettingsPanel from './components/sidebar/SettingsPanel.vue'
 import HomePage from './components/HomePage.vue'
 import TaskView from './views/TaskView.vue'
-import { listProjects, type Project } from './api/client'
+import { useTask } from './composables/useTask'
+import { listProjects, type Project, type Task } from './api/client'
 
 useTheme()
 
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
 const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings' | null>('chat')
+
+const { tasks, currentTask, loadTasks } = useTask()
+
+function handleSelectTask(task: Task) {
+  currentTask.value = task
+}
 
 async function loadProjects() {
   try {
@@ -22,6 +34,7 @@ async function loadProjects() {
 
 function handleSelectProject(project: Project) {
   selectedProject.value = project
+  loadTasks(project.id)
 }
 
 function handleBack() {
@@ -34,6 +47,27 @@ loadProjects()
 <template>
   <div id="app" class="app-layout">
     <ActivityBar v-model:active-panel="activePanel" />
+
+    <!-- Shared sidebar: visible when any panel is active, regardless of page -->
+    <Sidebar
+      v-if="activePanel && activePanel !== 'settings'"
+      :title="activePanel === 'chat' ? 'Chat' : activePanel === 'files' ? 'Files' : 'Plugins'"
+    >
+      <ChatPanel
+        v-if="activePanel === 'chat'"
+        :tasks="tasks"
+        :active-task-id="currentTask?.id"
+        @select="handleSelectTask"
+      />
+      <FilesPanel v-else-if="activePanel === 'files'" />
+      <PluginsPanel v-else-if="activePanel === 'plugins'" />
+    </Sidebar>
+
+    <SettingsPanel
+      v-else-if="activePanel === 'settings'"
+      :servers="[]"
+    />
+
     <div class="app-content">
       <HomePage
         v-if="!selectedProject"
@@ -43,9 +77,7 @@ loadProjects()
       <TaskView
         v-else
         :project="selectedProject"
-        :active-panel="activePanel"
         @back="handleBack"
-        @update:active-panel="activePanel = $event"
       />
     </div>
   </div>

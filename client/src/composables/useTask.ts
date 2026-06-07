@@ -1,12 +1,12 @@
 import { ref } from 'vue'
 import { createTask, getTask, listTasks, cancelTask, type Task } from '../api/client'
 
-export function useTask() {
-  const tasks = ref<Task[]>([])
-  const currentTask = ref<Task | null>(null)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+const tasks = ref<Task[]>([])
+const currentTask = ref<Task | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
 
+export function useTask() {
   async function submit(projectId: string, prompt: string) {
     loading.value = true
     error.value = null
