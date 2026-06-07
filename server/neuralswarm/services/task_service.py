@@ -47,7 +47,7 @@ class TaskService:
 
         await redis_client.set_task_status(str(task.id), "pending")
 
-        asyncio.create_task(self._execute_agent(task.id, project, agent_model, llm_model))
+        asyncio.create_task(self._execute_agent(task.id, project, agent_model, llm_model, prompt))
 
         return task
 
@@ -67,7 +67,7 @@ class TaskService:
 
         return task
 
-    async def _execute_agent(self, task_id: UUID, project: Project, agent_model: AgentModel, llm_model: LLM):
+    async def _execute_agent(self, task_id: UUID, project: Project, agent_model: AgentModel, llm_model: LLM, prompt: str):
         """Execute agent in background."""
         task_id_str = str(task_id)
 
@@ -106,7 +106,7 @@ class TaskService:
 
             # Execute
             result = await agent.execute(
-                task=task.input,
+                task=prompt,
                 llm_id=llm_model.id,
                 provider=llm_model.provider,
                 model_id=llm_model.model_id,

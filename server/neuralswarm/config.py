@@ -19,9 +19,10 @@ class Settings(BaseSettings):
     LLM_GATEWAY_TIMEOUT: int = 30
 
     model_config = {
-        "env_file": ".env",
+        "env_file": "../.env",
         "env_file_encoding": "utf-8",
         "env_prefix": "NS_",
+        "extra": "ignore",
     }
 
 
