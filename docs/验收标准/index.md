@@ -13,8 +13,9 @@
 neuralswarm-code/
 ├── server/          # Python/FastAPI 服务器（Track A）
 ├── client/          # Vue 前端（三端共用：桌面、Web、移动端）（Track C）
-├── desktop/         # Tauri 壳（复用 client/）（Track C）
-├── mobile/          # 移动端原生壳（复用 client/）（M8）
+├── core/            # Rust 客户端 Core（桌面、移动端复用）
+├── desktop/         # Tauri 壳（复用 client/ + core/）（Track C）
+├── mobile/          # 移动端原生壳（复用 client/ + core/）（M8）
 ├── docker/          # Docker Compose 部署配置
 └── docs/            # 文档
 ```
