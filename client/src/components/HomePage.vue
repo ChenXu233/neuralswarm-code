@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Folder, Plus, MessageSquare, ArrowLeft } from 'lucide-vue-next'
+import { Folder, Plus, MessageSquare, ArrowLeft, Globe } from 'lucide-vue-next'
 import type { Project } from '../api/client'
+import { canOpenLocalFolder } from '../utils/platform'
 
 defineProps<{
   projects: Project[]
@@ -77,11 +78,18 @@ function formatTime(dateStr: string) {
                   <div class="option-desc">创建一个新的工作空间</div>
                 </div>
               </div>
-              <div class="option-item">
+              <div v-if="canOpenLocalFolder()" class="option-item">
                 <Folder :size="16" color="#52c41a" />
                 <div>
-                  <div class="option-title">打开文件夹</div>
+                  <div class="option-title">打开本地文件夹</div>
                   <div class="option-desc">从本地文件夹导入</div>
+                </div>
+              </div>
+              <div v-else class="option-item">
+                <Globe :size="16" color="#52c41a" />
+                <div>
+                  <div class="option-title">连接云端项目</div>
+                  <div class="option-desc">浏览器只能操作云端项目</div>
                 </div>
               </div>
               <div class="option-item" @click="emit('global')">
