@@ -41,57 +41,59 @@ function formatTime(dateStr: string) {
 
       <!-- Right: Projects or Options -->
       <div class="projects-section">
-        <template v-if="!showOptions">
-          <div class="section-label">最近项目</div>
-          <div class="project-list">
-            <div
-              v-for="project in projects"
-              :key="project.id"
-              class="project-item"
-              @click="emit('select', project)"
-            >
-              <Folder :size="14" />
-              <span class="project-name">{{ project.name }}</span>
-              <span class="project-time">{{ formatTime(project.updated_at) }}</span>
+        <Transition name="slide-fade" mode="out-in">
+          <div v-if="!showOptions" key="projects" class="projects-content">
+            <div class="section-label">最近项目</div>
+            <div class="project-list">
+              <div
+                v-for="project in projects"
+                :key="project.id"
+                class="project-item"
+                @click="emit('select', project)"
+              >
+                <Folder :size="14" />
+                <span class="project-name">{{ project.name }}</span>
+                <span class="project-time">{{ formatTime(project.updated_at) }}</span>
+              </div>
             </div>
-          </div>
-          <button class="open-btn" @click="showOptions = true">
-            <Plus :size="12" />
-            <span>打开项目</span>
-          </button>
-        </template>
-
-        <template v-else>
-          <div class="options-header">
-            <button class="back-btn" @click="showOptions = false">
-              <ArrowLeft :size="10" />
+            <button class="open-btn" @click="showOptions = true">
+              <Plus :size="12" />
+              <span>打开项目</span>
             </button>
-            <span class="options-title">打开项目</span>
           </div>
-          <div class="options-list">
-            <div class="option-item">
-              <Plus :size="16" color="#1890ff" />
-              <div>
-                <div class="option-title">新建项目</div>
-                <div class="option-desc">创建一个新的工作空间</div>
-              </div>
+
+          <div v-else key="options" class="options-content">
+            <div class="options-header">
+              <button class="back-btn" @click="showOptions = false">
+                <ArrowLeft :size="10" />
+              </button>
+              <span class="options-title">打开项目</span>
             </div>
-            <div class="option-item">
-              <Folder :size="16" color="#52c41a" />
-              <div>
-                <div class="option-title">打开文件夹</div>
-                <div class="option-desc">从本地文件夹导入</div>
+            <div class="options-list">
+              <div class="option-item">
+                <Plus :size="16" color="#1890ff" />
+                <div>
+                  <div class="option-title">新建项目</div>
+                  <div class="option-desc">创建一个新的工作空间</div>
+                </div>
               </div>
-            </div>
-            <div class="option-item" @click="emit('global')">
-              <MessageSquare :size="16" color="#faad14" />
-              <div>
-                <div class="option-title">全局模式</div>
-                <div class="option-desc">不绑定项目，直接对话</div>
+              <div class="option-item">
+                <Folder :size="16" color="#52c41a" />
+                <div>
+                  <div class="option-title">打开文件夹</div>
+                  <div class="option-desc">从本地文件夹导入</div>
+                </div>
+              </div>
+              <div class="option-item" @click="emit('global')">
+                <MessageSquare :size="16" color="#faad14" />
+                <div>
+                  <div class="option-title">全局模式</div>
+                  <div class="option-desc">不绑定项目，直接对话</div>
+                </div>
               </div>
             </div>
           </div>
-        </template>
+        </Transition>
       </div>
     </div>
   </div>
@@ -282,5 +284,29 @@ function formatTime(dateStr: string) {
 .option-desc {
   font-size: 11px;
   color: var(--color-text-tertiary);
+}
+
+/* Slide-fade transition */
+.slide-fade-enter-active {
+  transition: all 0.25s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.slide-fade-enter-from {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+.slide-fade-leave-to {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+.projects-content,
+.options-content {
+  width: 100%;
 }
 </style>
