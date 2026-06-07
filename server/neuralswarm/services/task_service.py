@@ -75,15 +75,25 @@ class TaskService:
             await redis_client.set_task_status(task_id_str, "running")
             await redis_client.publish_event(task_id_str, {"type": "status", "data": {"status": "running"}})
 
-            # Extract project path
-            project_path = project.path
-            if project_path.startswith("server:///"):
-                project_path = project_path[len("server://"):]
-            elif project_path.startswith("server://"):
-                project_path = project_path[len("server://"):]
+            # Create tool executor based on project type
+            if project.project_type == "local":
+                from neuralswarm.services.bridge import BridgeRouter
+                from neuralswarm.api.ws_client import get_client_manager
+                bridge = BridgeRouter(get_client_manager())
+                tool_executor = ToolExecutor(
+                    project_path="",
+                    bridge=bridge,
+                    project_type="local",
+                    project_uri=project.path,
+                )
+            else:
+                project_path = project.path
+                if project_path.startswith("server:///"):
+                    project_path = project_path[len("server://"):]
+                elif project_path.startswith("server://"):
+                    project_path = project_path[len("server://"):]
+                tool_executor = ToolExecutor(project_path=project_path)
 
-            # Create tool executor with project path
-            tool_executor = ToolExecutor(project_path=project_path)
             tool_executor.register_defaults()
 
             # Create agent repository

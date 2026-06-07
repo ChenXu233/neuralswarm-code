@@ -1,5 +1,6 @@
 """M2 integration test: full flow from project creation to task submission."""
 import tempfile
+import uuid
 
 import pytest
 import pytest_asyncio
@@ -9,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.ext.compiler import compiles
 
 from neuralswarm.database import get_db
-from neuralswarm.models import Agent, LLM, Project, Task, TaskStatus
+from neuralswarm.models import Agent, LLM, Project, Task, TaskStatus, User
 from neuralswarm.server import create_app
 
 
@@ -27,6 +28,7 @@ async def client():
         await conn.run_sync(Agent.__table__.create, checkfirst=True)
         await conn.run_sync(LLM.__table__.create, checkfirst=True)
         await conn.run_sync(Task.__table__.create, checkfirst=True)
+        await conn.run_sync(User.__table__.create, checkfirst=True)
 
     session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -105,3 +107,48 @@ async def test_project_crud_full_flow(client):
         # Verify deleted
         resp = await client.get(f"/api/projects/{project_id}")
         assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_auth_flow(client):
+    """Full auth flow: register -> login -> refresh."""
+    username = f"integ_user_{uuid.uuid4().hex[:8]}"
+
+    # Register
+    resp = await client.post("/api/auth/register", json={
+        "username": username,
+        "password": "testpass123",
+    })
+    assert resp.status_code == 200
+
+    # Login
+    resp = await client.post("/api/auth/login", json={
+        "username": username,
+        "password": "testpass123",
+    })
+    assert resp.status_code == 200
+    tokens = resp.json()["data"]
+
+    # Refresh
+    resp = await client.post("/api/auth/refresh", json={
+        "refresh_token": tokens["refresh_token"],
+    })
+    assert resp.status_code == 200
+    assert "access_token" in resp.json()["data"]
+
+
+@pytest.mark.asyncio
+async def test_local_project_flow(client):
+    """Create local project and verify."""
+    resp = await client.post("/api/projects", json={
+        "name": "integ-local",
+        "path": "/tmp/test",
+        "project_type": "local",
+        "client_id": "client-001",
+    })
+    assert resp.status_code == 200
+    project_id = resp.json()["data"]["id"]
+
+    resp = await client.get(f"/api/projects/{project_id}")
+    assert resp.status_code == 200
+    assert resp.json()["data"]["project_type"] == "local"

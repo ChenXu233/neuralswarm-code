@@ -4,12 +4,15 @@ from neuralswarm.core.tool_metadata import ToolMetadata
 
 
 class ToolExecutor:
-    """工具执行器，支持动态注册和项目路径上下文。"""
+    """Tool executor with support for local and bridge modes."""
 
-    def __init__(self, project_path: str = ""):
+    def __init__(self, project_path: str = "", bridge=None, project_type: str = "cloud", project_uri: str = ""):
         self._tools: dict[str, Callable] = {}
         self._metadata: dict[str, ToolMetadata] = {}
         self._project_path = project_path
+        self._bridge = bridge
+        self._project_type = project_type
+        self._project_uri = project_uri
 
     def register(self, name: str, func: Callable, metadata: ToolMetadata | None = None):
         """注册工具，可选附带元数据。"""
@@ -18,11 +21,15 @@ class ToolExecutor:
             self._metadata[name] = metadata
 
     def register_defaults(self):
-        """注册内置工具（基于项目路径创建）。"""
-        from neuralswarm.core.tools import create_file_ops, create_shell
-
-        (file_read, read_meta), (file_write, write_meta) = create_file_ops(self._project_path)
-        shell, shell_meta = create_shell(self._project_path)
+        """Register built-in tools."""
+        if self._project_type == "local" and self._bridge:
+            from neuralswarm.core.tools.bridge_tools import create_bridge_file_ops, create_bridge_shell
+            (file_read, read_meta), (file_write, write_meta) = create_bridge_file_ops(self._bridge, self._project_uri)
+            shell, shell_meta = create_bridge_shell(self._bridge, self._project_uri)
+        else:
+            from neuralswarm.core.tools import create_file_ops, create_shell
+            (file_read, read_meta), (file_write, write_meta) = create_file_ops(self._project_path)
+            shell, shell_meta = create_shell(self._project_path)
 
         self.register("file_read", file_read, metadata=read_meta)
         self.register("file_write", file_write, metadata=write_meta)
