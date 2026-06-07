@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Search } from 'lucide-vue-next'
+import { Search } from 'lucide-vue-next'
 import StatusDot from '../ui/StatusDot.vue'
 import type { Task } from '../../api/client'
 
