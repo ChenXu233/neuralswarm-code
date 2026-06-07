@@ -1,0 +1,1 @@
+E:\git\neuralswarm-code\client\core\target\debug\libneuralswarm_client_core.rlib: E:\git\neuralswarm-code\client\core\src\config.rs E:\git\neuralswarm-code\client\core\src\connection.rs E:\git\neuralswarm-code\client\core\src\executor.rs E:\git\neuralswarm-code\client\core\src\lib.rs
