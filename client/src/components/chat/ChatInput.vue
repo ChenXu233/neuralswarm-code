@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Send, Paperclip } from 'lucide-vue-next'
+import { Send } from 'lucide-vue-next'
 
 const props = defineProps<{
   loading?: boolean
@@ -31,53 +31,60 @@ function handleKeydown(e: KeyboardEvent) {
     <div class="input-wrapper">
       <textarea
         v-model="text"
-        placeholder="继续任务..."
+        placeholder="Type a message..."
         @keydown="handleKeydown"
+        rows="1"
       ></textarea>
       <div class="input-actions">
-        <button class="action-btn" title="附件">
-          <Paperclip :size="14" />
-        </button>
+        <span class="shortcut-hint">Ctrl ↵</span>
         <button
           class="send-btn"
           :disabled="loading || !text.trim()"
           @click="handleSubmit"
         >
           <Send :size="14" />
-          <span>{{ loading ? '发送中...' : '发送' }}</span>
         </button>
       </div>
-    </div>
-    <div class="input-hint">
-      ⌘↵ 发送 · / 命令
     </div>
   </div>
 </template>
 
 <style scoped>
 .chat-input {
-  padding: 12px 16px;
-  border-top: 1px solid var(--color-border);
-  background: var(--color-surface);
+  padding: 12px 16px 16px;
 }
 
 .input-wrapper {
-  background: var(--color-surface-hover);
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 12px;
+  padding: 10px 16px;
+  box-shadow: var(--shadow-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-glow);
 }
 
 .input-wrapper textarea {
-  width: 100%;
-  min-height: 40px;
+  flex: 1;
+  min-height: 24px;
+  max-height: 120px;
   border: none;
   background: transparent;
-  font-family: inherit;
-  font-size: 13px;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
   color: var(--color-text);
   resize: none;
   outline: none;
+  line-height: 1.5;
 }
 
 .input-wrapper textarea::placeholder {
@@ -87,38 +94,30 @@ function handleKeydown(e: KeyboardEvent) {
 .input-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
-  margin-top: 8px;
+  flex-shrink: 0;
 }
 
-.action-btn {
-  padding: 6px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-}
-
-.action-btn:hover {
+.shortcut-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
   background: var(--color-surface-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
 }
 
 .send-btn {
-  padding: 6px 14px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-bg);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  transition: background-color var(--transition-fast), opacity var(--transition-fast);
 }
 
 .send-btn:hover:not(:disabled) {
@@ -126,14 +125,7 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 .send-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
-}
-
-.input-hint {
-  text-align: center;
-  margin-top: 6px;
-  font-size: 10px;
-  color: var(--color-text-tertiary);
 }
 </style>
