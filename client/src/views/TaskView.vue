@@ -9,6 +9,8 @@ import PluginsPanel from '../components/sidebar/PluginsPanel.vue'
 import SettingsPanel from '../components/sidebar/SettingsPanel.vue'
 import ChatMessage from '../components/ChatMessage.vue'
 import ToolCall from '../components/ToolCall.vue'
+import DiffView from '../components/chat/DiffView.vue'
+import type { DiffLine } from '../components/chat/DiffView.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import StatusDot from '../components/ui/StatusDot.vue'
 import { useWebSocket } from '../composables/useWebSocket'
@@ -30,8 +32,13 @@ const { tasks, currentTask, loading, submit, loadTasks } = useTask()
 const activeTaskId = computed(() => currentTask.value?.id || '')
 const { events, connected } = useWebSocket(activeTaskId)
 
+interface MessageEvent {
+  type: string
+  data: any
+}
+
 const messages = computed(() => {
-  const result: Array<{ type: string; data: any }> = []
+  const result: MessageEvent[] = []
   for (const event of events.value) {
     if (event.type === 'message') {
       result.push({ type: 'message', data: event.data })
@@ -42,6 +49,8 @@ const messages = computed(() => {
       if (last?.type === 'tool_call') {
         last.data.output = event.data.output
       }
+    } else if (event.type === 'diff') {
+      result.push({ type: 'diff', data: event.data })
     }
   }
   return result
@@ -65,7 +74,10 @@ loadTasks(props.project.id)
 
 <template>
   <div class="task-view">
-    <Sidebar v-if="activePanel !== 'settings'" :title="activePanel === 'chat' ? '对话' : activePanel === 'files' ? '文件' : '插件'">
+    <Sidebar
+      v-if="activePanel !== 'settings'"
+      :title="activePanel === 'chat' ? 'Chat' : activePanel === 'files' ? 'Files' : 'Plugins'"
+    >
       <ChatPanel
         v-if="activePanel === 'chat'"
         :tasks="tasks"
@@ -89,7 +101,7 @@ loadTasks(props.project.id)
         </button>
         <span class="task-title">{{ project.name }}</span>
         <StatusDot :status="taskStatus" />
-        <span class="ws-status">{{ connected ? '已连接' : '未连接' }}</span>
+        <span class="ws-status">{{ connected ? 'connected' : 'disconnected' }}</span>
       </div>
 
       <div class="messages-area">
@@ -100,10 +112,18 @@ loadTasks(props.project.id)
             :content="msg.data.content"
           />
           <ToolCall
-            v-if="msg.type === 'tool_call'"
+            v-else-if="msg.type === 'tool_call'"
             :tool="msg.data.tool"
             :args="msg.data.args"
             :output="msg.data.output"
+          />
+          <DiffView
+            v-else-if="msg.type === 'diff'"
+            :tool="msg.data.tool"
+            :file-path="msg.data.filePath"
+            :lines="msg.data.lines"
+            :added-count="msg.data.addedCount"
+            :removed-count="msg.data.removedCount"
           />
         </template>
       </div>
@@ -127,6 +147,7 @@ loadTasks(props.project.id)
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .back-btn {
@@ -137,20 +158,23 @@ loadTasks(props.project.id)
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .back-btn:hover {
   color: var(--color-text);
+  background: var(--color-surface-hover);
 }
 
 .task-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
   color: var(--color-text);
 }
 
 .ws-status {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--color-text-tertiary);
   margin-left: auto;
 }
@@ -158,6 +182,6 @@ loadTasks(props.project.id)
 .messages-area {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px 24px;
 }
 </style>
