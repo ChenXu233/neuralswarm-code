@@ -17,15 +17,25 @@ router = APIRouter(prefix="/api/projects", tags=["projects"])
 
 @router.post("")
 async def create_project(body: ProjectCreate, db: AsyncSession = Depends(get_db)):
-    if not os.path.exists(body.path):
-        raise HTTPException(status_code=400, detail=f"Path does not exist: {body.path}")
-    if not os.path.isdir(body.path):
-        raise HTTPException(status_code=400, detail=f"Path is not a directory: {body.path}")
+    if body.project_type == "local":
+        if not body.client_id:
+            raise HTTPException(status_code=400, detail="client_id required for local projects")
+        path_uri = f"client://{body.client_id}{body.path}"
+    else:
+        # Cloud project - validate path exists
+        if not os.path.exists(body.path):
+            raise HTTPException(status_code=400, detail=f"Path does not exist: {body.path}")
+        if not os.path.isdir(body.path):
+            raise HTTPException(status_code=400, detail=f"Path is not a directory: {body.path}")
+        normalized = body.path.replace("\\", "/")
+        path_uri = f"server:///{normalized.lstrip('/')}"
 
-    normalized = body.path.replace("\\", "/")
-    path_uri = f"server:///{normalized.lstrip('/')}"
-
-    project = Project(name=body.name, path=path_uri)
+    project = Project(
+        name=body.name,
+        path=path_uri,
+        project_type=body.project_type,
+        client_id=body.client_id,
+    )
     db.add(project)
     await db.commit()
     await db.refresh(project)
