@@ -1,48 +1,148 @@
 <script setup lang="ts">
-defineProps<{ tool: string; args: any; output?: string }>()
+import { ref } from 'vue'
+import { ChevronRight, ChevronDown } from 'lucide-vue-next'
 
-function formatArgs(args: any): string {
-  return JSON.stringify(args, null, 2)
+defineProps<{
+  tool: string
+  args: any
+  output?: string
+}>()
+
+const expanded = ref(false)
+
+function toggle() {
+  expanded.value = !expanded.value
+}
+
+function formatJson(obj: any): string {
+  try {
+    return JSON.stringify(obj, null, 2)
+  } catch {
+    return String(obj)
+  }
 }
 </script>
 
 <template>
-  <div class="tool-call">
-    <div class="header">
-      <span class="icon">&#x1f527;</span>
-      <span class="name">{{ tool }}</span>
+  <div :class="['tool-call', { expanded }]">
+    <!-- Collapsed header -->
+    <div class="tool-header" @click="toggle">
+      <ChevronRight v-if="!expanded" :size="12" class="chevron" />
+      <ChevronDown v-else :size="12" class="chevron" />
+      <span class="tool-bullet">◆</span>
+      <span class="tool-name">{{ tool }}</span>
+      <span v-if="output" class="tool-stat done">done</span>
+      <span v-else class="tool-stat pending">...</span>
     </div>
-    <pre class="code-block"><code>{{ formatArgs(args) }}</code></pre>
-    <div v-if="output" class="output">
-      <div class="label">Output:</div>
-      <pre class="code-block"><code>{{ output }}</code></pre>
-    </div>
+
+    <!-- Expanded body -->
+    <Transition name="expand">
+      <div v-if="expanded" class="tool-body">
+        <!-- Parameters -->
+        <div class="tool-section">
+          <div class="tool-section-label">PARAMETERS</div>
+          <pre class="tool-code">{{ formatJson(args) }}</pre>
+        </div>
+
+        <!-- Result -->
+        <div v-if="output" class="tool-section result-section">
+          <div class="tool-section-label">RESULT</div>
+          <pre class="tool-code">{{ output }}</pre>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
-.tool-call { margin: 8px 0; padding: 12px; background: var(--color-surface, #fafafa); border: 1px solid var(--color-border, #e8e8e8); border-radius: 8px; }
-.header { font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.icon { font-size: 14px; }
-.name { font-size: 13px; font-weight: 600; color: var(--color-text, #333); }
-.code-block {
-  background: #1e1e1e;
-  color: #d4d4d4;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  overflow-x: auto;
-  line-height: 1.5;
+.tool-call {
+  margin-bottom: 12px;
+  border-left: 2px solid var(--color-border);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  transition: border-color var(--transition-fast);
+  animation: message-in var(--transition-normal) var(--ease-out);
+}
+
+.tool-call.expanded {
+  border-left-color: var(--color-accent);
+}
+
+/* Header */
+.tool-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast);
+}
+
+.tool-header:hover {
+  background: var(--color-surface-hover);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.tool-bullet {
+  color: var(--color-accent);
+  font-size: 8px;
+  flex-shrink: 0;
+}
+
+.tool-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-accent);
+  flex: 1;
+}
+
+.tool-stat {
+  font-size: var(--text-xs);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.tool-stat.done {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+}
+
+.tool-stat.pending {
+  color: var(--color-text-tertiary);
+}
+
+/* Body */
+.tool-body {
+  overflow: hidden;
+}
+
+.tool-section {
+  padding: 8px 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+.tool-section.result-section {
+  background: var(--color-surface-hover);
+}
+
+.tool-section-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.tool-code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
   margin: 0;
-}
-.code-block code {
-  white-space: pre;
-}
-.output { margin-top: 10px; }
-.label { font-size: 11px; color: var(--color-text-tertiary, #999); margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-.output .code-block {
-  max-height: 300px;
-  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
 }
 </style>
