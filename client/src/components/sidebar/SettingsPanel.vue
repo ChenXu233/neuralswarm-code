@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Circle } from 'lucide-vue-next'
 import StatusDot from '../ui/StatusDot.vue'
 
 interface Server {

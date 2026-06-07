@@ -20,7 +20,7 @@ const props = defineProps<{ project: Project }>()
 const emit = defineEmits<{ back: [] }>()
 
 const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings'>('chat')
-const { tasks, currentTask, loading, error, submit, loadTasks } = useTask()
+const { tasks, currentTask, loading, submit, loadTasks } = useTask()
 
 const activeTaskId = computed(() => currentTask.value?.id || '')
 const { events, connected } = useWebSocket(activeTaskId)
