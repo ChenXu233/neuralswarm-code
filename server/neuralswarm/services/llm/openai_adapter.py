@@ -1,7 +1,7 @@
 import json
 
 from neuralswarm.services.llm.base import BaseAdapter
-from neuralswarm.services.llm.types import LLMChunk, LLMResponse
+from neuralswarm.services.llm.types import LLMChunk, LLMResponse, ToolCall
 
 
 class OpenAIAdapter(BaseAdapter):
@@ -21,6 +21,7 @@ class OpenAIAdapter(BaseAdapter):
         stream: bool = False,
         temperature: float = 0.7,
         max_tokens: int | None = None,
+        tools: list[dict] | None = None,
     ) -> dict:
         body = {
             "model": model_id,
@@ -30,15 +31,35 @@ class OpenAIAdapter(BaseAdapter):
         }
         if max_tokens is not None:
             body["max_tokens"] = max_tokens
+        if tools:
+            body["tools"] = tools
         return body
 
     def parse_response(self, data: dict) -> LLMResponse:
         choice = data["choices"][0]
+        message = choice["message"]
+
+        tool_calls = None
+        if "tool_calls" in message and message["tool_calls"]:
+            tool_calls = []
+            for tc in message["tool_calls"]:
+                func = tc["function"]
+                args = func["arguments"]
+                if isinstance(args, str):
+                    args = json.loads(args)
+                tool_calls.append(ToolCall(
+                    id=tc["id"],
+                    name=func["name"],
+                    arguments=args,
+                ))
+
+        content = message.get("content") or ""
         return LLMResponse(
-            content=choice["message"]["content"],
+            content=content,
             model=data.get("model", ""),
             usage=data.get("usage", {}),
             finish_reason=choice.get("finish_reason", "stop"),
+            tool_calls=tool_calls,
         )
 
     def parse_stream_chunk(self, line: str) -> LLMChunk | None:

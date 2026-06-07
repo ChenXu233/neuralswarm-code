@@ -1,7 +1,7 @@
 import json
 
 from neuralswarm.services.llm.base import BaseAdapter
-from neuralswarm.services.llm.types import LLMChunk, LLMResponse
+from neuralswarm.services.llm.types import LLMChunk, LLMResponse, ToolCall
 
 
 class ClaudeAdapter(BaseAdapter):
@@ -21,6 +21,7 @@ class ClaudeAdapter(BaseAdapter):
         stream: bool = False,
         temperature: float = 0.7,
         max_tokens: int | None = None,
+        tools: list[dict] | None = None,
     ) -> dict:
         body = {
             "model": model_id,
@@ -30,19 +31,33 @@ class ClaudeAdapter(BaseAdapter):
         }
         if max_tokens is not None:
             body["max_tokens"] = max_tokens
+        if tools:
+            body["tools"] = tools
         return body
 
     def parse_response(self, data: dict) -> LLMResponse:
         content_blocks = data.get("content", [])
         text = ""
+        tool_calls = None
+
         for block in content_blocks:
             if block.get("type") == "text":
                 text += block.get("text", "")
+            elif block.get("type") == "tool_use":
+                if tool_calls is None:
+                    tool_calls = []
+                tool_calls.append(ToolCall(
+                    id=block["id"],
+                    name=block["name"],
+                    arguments=block["input"],
+                ))
+
         return LLMResponse(
             content=text,
             model=data.get("model", ""),
             usage=data.get("usage", {}),
             finish_reason=data.get("stop_reason", "end_turn"),
+            tool_calls=tool_calls,
         )
 
     def parse_stream_chunk(self, line: str) -> LLMChunk | None:

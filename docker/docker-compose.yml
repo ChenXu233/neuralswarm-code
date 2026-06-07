@@ -1,0 +1,102 @@
+# NeuralSwarm Docker Compose
+# 按需部署：docker compose --profile <profile> up -d
+#
+# Profiles:
+#   infra  — PostgreSQL + Redis（基础架构）
+#   server — FastAPI 服务器（依赖 infra）
+#   dev    — 开发工具：Adminer + Redis Commander
+#
+# 示例：
+#   只部署基础设施：  docker compose --profile infra up -d
+#   部署基础设施+服务：docker compose --profile server up -d
+#   开发模式（全部）： docker compose --profile dev up -d
+#   一键全部部署：    docker compose --profile infra --profile server --profile dev up -d
+
+services:
+  # ── 基础设施 ──────────────────────────────────
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: neuralswarm-postgres
+    profiles: ["infra"]
+    environment:
+      POSTGRES_USER: ${NS_DB_USER:-neuralswarm}
+      POSTGRES_PASSWORD: ${NS_DB_PASSWORD:-neuralswarm}
+      POSTGRES_DB: ${NS_DB_NAME:-neuralswarm}
+    ports:
+      - "${NS_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NS_DB_USER:-neuralswarm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: neuralswarm-redis
+    profiles: ["infra"]
+    command: redis-server --requirepass ${NS_REDIS_PASSWORD:-}
+    ports:
+      - "${NS_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── 服务器 ────────────────────────────────────
+
+  server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.server
+    container_name: neuralswarm-server
+    profiles: ["server"]
+    environment:
+      NS_DATABASE_URL: postgresql+asyncpg://${NS_DB_USER:-neuralswarm}:${NS_DB_PASSWORD:-neuralswarm}@postgres:5432/${NS_DB_NAME:-neuralswarm}
+      NS_REDIS_URL: redis://${NS_REDIS_PASSWORD:-""}@redis:6379/0
+      NS_HOST: "0.0.0.0"
+      NS_PORT: "8000"
+      NS_DEBUG: "${NS_DEBUG:-false}"
+    ports:
+      - "${NS_SERVER_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── 开发工具 ──────────────────────────────────
+
+  adminer:
+    image: adminer:latest
+    container_name: neuralswarm-adminer
+    profiles: ["dev"]
+    ports:
+      - "${NS_ADMINER_PORT:-8080}:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: neuralswarm-redis-commander
+    profiles: ["dev"]
+    ports:
+      - "${NS_REDIS_COMMANDER_PORT:-8081}:8081"
+    environment:
+      REDIS_HOSTS: "local:redis:6379:0:${NS_REDIS_PASSWORD:-}"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,4 +1,4 @@
-from neuralswarm.core.tools.file_ops import file_read, file_write
-from neuralswarm.core.tools.shell import shell
+from neuralswarm.core.tools.file_ops import create_file_ops
+from neuralswarm.core.tools.shell import create_shell
 
-__all__ = ["file_read", "file_write", "shell"]
+__all__ = ["create_file_ops", "create_shell"]

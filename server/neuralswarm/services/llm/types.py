@@ -2,12 +2,21 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class ToolCall:
+    """LLM 返回的工具调用。"""
+    id: str
+    name: str
+    arguments: dict
+
+
+@dataclass
 class LLMResponse:
     """LLM 非流式响应。"""
     content: str
     model: str
     usage: dict = field(default_factory=dict)
     finish_reason: str = "stop"
+    tool_calls: list[ToolCall] | None = None
 
 
 @dataclass

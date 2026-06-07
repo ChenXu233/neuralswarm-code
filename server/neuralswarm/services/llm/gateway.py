@@ -41,6 +41,7 @@ class LLMGateway:
         messages: list[dict],
         temperature: float = 0.7,
         max_tokens: int | None = None,
+        tools: list[dict] | None = None,
     ) -> LLMResponse:
         """非流式聊天。"""
         adapter = self._get_adapter(provider)
@@ -51,6 +52,7 @@ class LLMGateway:
             stream=False,
             temperature=temperature,
             max_tokens=max_tokens,
+            tools=tools,
         )
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:

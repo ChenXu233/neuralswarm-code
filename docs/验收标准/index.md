@@ -15,6 +15,7 @@ neuralswarm-code/
 ├── client/          # Vue 前端（三端共用：桌面、Web、移动端）（Track C）
 ├── desktop/         # Tauri 壳（复用 client/）（Track C）
 ├── mobile/          # 移动端原生壳（复用 client/）（M8）
+├── docker/          # Docker Compose 部署配置
 └── docs/            # 文档
 ```
 

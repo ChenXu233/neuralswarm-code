@@ -20,6 +20,7 @@ class BaseAdapter(ABC):
         stream: bool = False,
         temperature: float = 0.7,
         max_tokens: int | None = None,
+        tools: list[dict] | None = None,
     ) -> dict:
         """格式化请求体。"""
 
