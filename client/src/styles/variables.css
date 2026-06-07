@@ -1,57 +1,398 @@
+/* ==========================================================================
+   Design Token System
+   --------------------------------------------------------------------------
+   Centralized CSS custom properties for the Neural Swarm design system.
+   Themes are activated by setting `data-theme="<name>"` on <html> or <body>.
+   The default (`:root`) is the Warm Stone light theme.
+   ========================================================================== */
+
 :root {
-  /* 颜色 - 浅色主题 */
+  /* ---------- Brand palette (Warm Stone light) ---------- */
   --color-bg: #faf8f5;
   --color-surface: #ffffff;
   --color-surface-hover: #f5f3f0;
+
   --color-text: #2d2a26;
-  --color-text-secondary: #666666;
-  --color-text-tertiary: #999999;
+  --color-text-secondary: #6b6760;
+  --color-text-tertiary: #99948c;
+
   --color-border: #e8e4df;
+  --color-border-strong: #d6d1ca;
+
   --color-primary: #2d2a26;
   --color-primary-hover: #1a1816;
-  --color-accent: #1890ff;
-  --color-success: #52c41a;
-  --color-warning: #faad14;
-  --color-error: #ff4d4f;
 
-  /* Activity Bar */
-  --color-activity-bg: #f0ece6;
-  --color-activity-active: #e8e4df;
+  --color-accent: #c4755a;
+  --color-accent-hover: #b06548;
+  --color-accent-soft: rgba(196, 117, 90, 0.12);
 
-  /* 圆角 */
+  --color-success: #5a8a5e;
+  --color-success-soft: rgba(90, 138, 94, 0.12);
+  --color-warning: #d4a256;
+  --color-warning-soft: rgba(212, 162, 86, 0.14);
+  --color-error: #c4625a;
+  --color-error-soft: rgba(196, 98, 90, 0.12);
+  --color-info: #6b8cff;
+  --color-info-soft: rgba(107, 140, 255, 0.12);
+
+  /* ---------- Activity Bar ---------- */
+  --color-activity-bg: rgba(240, 236, 230, 0.6);
+  --color-activity-active: rgba(196, 117, 90, 0.08);
+  --color-activity-hover: rgba(196, 117, 90, 0.05);
+  --color-activity-icon: #6b6760;
+  --color-activity-icon-active: #c4755a;
+
+  /* ---------- Sidebar / Panel ---------- */
+  --color-sidebar-bg: rgba(255, 255, 255, 0.7);
+  --color-sidebar-border: #e8e4df;
+  --color-panel-bg: #ffffff;
+  --color-panel-border: #e8e4df;
+
+  /* ---------- Overlay / Glass ---------- */
+  --color-glass-bg: rgba(255, 255, 255, 0.65);
+  --color-glass-border: rgba(232, 228, 223, 0.8);
+  --color-overlay: rgba(45, 42, 38, 0.45);
+  --color-overlay-light: rgba(45, 42, 38, 0.08);
+
+  /* ---------- Selection / Focus ---------- */
+  --color-selection-bg: rgba(196, 117, 90, 0.18);
+  --color-focus-ring: rgba(196, 117, 90, 0.35);
+  --color-link: #c4755a;
+  --color-link-hover: #b06548;
+
+  /* ---------- Radius scale ---------- */
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
-  /* 字体 */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', monospace;
+  /* ---------- Shadows ---------- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.16);
+  --shadow-glow: 0 0 24px rgba(196, 117, 90, 0.25);
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 
-  /* 动画 */
+  /* ---------- Typography ---------- */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-mono: 'Cascadia Code', 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
+  --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --font-thin: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+  --text-3xl: 32px;
+  --text-display: 36px;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-widest: 0.08em;
+
+  /* ---------- Motion ---------- */
   --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+  --transition-slower: 450ms ease;
 
-  /* 布局 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ---------- Layout ---------- */
   --activity-bar-width: 48px;
   --sidebar-width: 240px;
+  --sidebar-width-collapsed: 0px;
+  --panel-min-width: 280px;
+  --header-height: 44px;
+  --status-bar-height: 24px;
+
+  /* ---------- Z-index scale ---------- */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 500;
+  --z-modal: 1000;
+  --z-popover: 1500;
+  --z-toast: 2000;
+  --z-tooltip: 2500;
+
+  /* ---------- Spacing ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
 }
 
-[data-theme="dark"] {
-  --color-bg: #1a1a1a;
-  --color-surface: #2d2d2d;
-  --color-surface-hover: #3d3d3d;
-  --color-text: #e8e4df;
-  --color-text-secondary: #a0a0a0;
-  --color-text-tertiary: #707070;
-  --color-border: #404040;
-  --color-primary: #e8e4df;
-  --color-primary-hover: #ffffff;
-  --color-accent: #40a9ff;
-  --color-success: #73d13d;
-  --color-warning: #ffc53d;
-  --color-error: #ff7875;
+/* ==========================================================================
+   Theme: Dark Slate
+   Cool, modern dark theme with electric-blue accent.
+   ========================================================================== */
+[data-theme="dark-slate"] {
+  --color-bg: #1a1d23;
+  --color-surface: #25282e;
+  --color-surface-hover: #2f3239;
 
-  --color-activity-bg: #252525;
-  --color-activity-active: #383838;
+  --color-text: #e0e0e0;
+  --color-text-secondary: #a8aab0;
+  --color-text-tertiary: #707378;
+
+  --color-border: #353941;
+  --color-border-strong: #444a55;
+
+  --color-primary: #e0e0e0;
+  --color-primary-hover: #ffffff;
+
+  --color-accent: #6b8cff;
+  --color-accent-hover: #8aa3ff;
+  --color-accent-soft: rgba(107, 140, 255, 0.16);
+
+  --color-success: #5acd8a;
+  --color-success-soft: rgba(90, 205, 138, 0.16);
+  --color-warning: #f0b04a;
+  --color-warning-soft: rgba(240, 176, 74, 0.18);
+  --color-error: #ff6b6b;
+  --color-error-soft: rgba(255, 107, 107, 0.16);
+  --color-info: #6b8cff;
+  --color-info-soft: rgba(107, 140, 255, 0.16);
+
+  --color-activity-bg: rgba(37, 40, 46, 0.6);
+  --color-activity-active: rgba(107, 140, 255, 0.12);
+  --color-activity-hover: rgba(107, 140, 255, 0.06);
+  --color-activity-icon: #a8aab0;
+  --color-activity-icon-active: #6b8cff;
+
+  --color-sidebar-bg: rgba(30, 33, 39, 0.7);
+  --color-sidebar-border: #353941;
+  --color-panel-bg: #25282e;
+  --color-panel-border: #353941;
+
+  --color-glass-bg: rgba(37, 40, 46, 0.65);
+  --color-glass-border: rgba(53, 57, 65, 0.8);
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-overlay-light: rgba(255, 255, 255, 0.05);
+
+  --color-selection-bg: rgba(107, 140, 255, 0.22);
+  --color-focus-ring: rgba(107, 140, 255, 0.4);
+  --color-link: #8aa3ff;
+  --color-link-hover: #a8b8ff;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 24px rgba(107, 140, 255, 0.35);
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   Theme: Pure Minimal
+   Crisp white, restrained accent. Generous whitespace, low chroma.
+   ========================================================================== */
+[data-theme="pure-minimal"] {
+  --color-bg: #ffffff;
+  --color-surface: #fafafa;
+  --color-surface-hover: #f2f2f2;
+
+  --color-text: #111111;
+  --color-text-secondary: #555555;
+  --color-text-tertiary: #888888;
+
+  --color-border: #ebebeb;
+  --color-border-strong: #d6d6d6;
+
+  --color-primary: #111111;
+  --color-primary-hover: #000000;
+
+  --color-accent: #6b9a7a;
+  --color-accent-hover: #588968;
+  --color-accent-soft: rgba(107, 154, 122, 0.12);
+
+  --color-success: #5a8a5e;
+  --color-success-soft: rgba(90, 138, 94, 0.1);
+  --color-warning: #c9a14a;
+  --color-warning-soft: rgba(201, 161, 74, 0.12);
+  --color-error: #b85648;
+  --color-error-soft: rgba(184, 86, 72, 0.1);
+  --color-info: #5577aa;
+  --color-info-soft: rgba(85, 119, 170, 0.1);
+
+  --color-activity-bg: rgba(250, 250, 250, 0.6);
+  --color-activity-active: rgba(107, 154, 122, 0.1);
+  --color-activity-hover: rgba(107, 154, 122, 0.05);
+  --color-activity-icon: #555555;
+  --color-activity-icon-active: #6b9a7a;
+
+  --color-sidebar-bg: rgba(255, 255, 255, 0.7);
+  --color-sidebar-border: #ebebeb;
+  --color-panel-bg: #fafafa;
+  --color-panel-border: #ebebeb;
+
+  --color-glass-bg: rgba(255, 255, 255, 0.7);
+  --color-glass-border: rgba(235, 235, 235, 0.85);
+  --color-overlay: rgba(17, 17, 17, 0.4);
+  --color-overlay-light: rgba(17, 17, 17, 0.05);
+
+  --color-selection-bg: rgba(107, 154, 122, 0.18);
+  --color-focus-ring: rgba(107, 154, 122, 0.32);
+  --color-link: #6b9a7a;
+  --color-link-hover: #588968;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 24px rgba(107, 154, 122, 0.2);
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* ==========================================================================
+   Theme: Amber Glow
+   Retro terminal vibe — true black with warm amber accent.
+   ========================================================================== */
+[data-theme="amber-glow"] {
+  --color-bg: #0d0d0d;
+  --color-surface: #141414;
+  --color-surface-hover: #1c1c1c;
+
+  --color-text: #ffcc66;
+  --color-text-secondary: #c9a14a;
+  --color-text-tertiary: #7a6532;
+
+  --color-border: #2a2218;
+  --color-border-strong: #3d3020;
+
+  --color-primary: #ffcc66;
+  --color-primary-hover: #ffe199;
+
+  --color-accent: #ffb432;
+  --color-accent-hover: #ffc55a;
+  --color-accent-soft: rgba(255, 180, 50, 0.16);
+
+  --color-success: #a8c66a;
+  --color-success-soft: rgba(168, 198, 106, 0.16);
+  --color-warning: #ffb432;
+  --color-warning-soft: rgba(255, 180, 50, 0.18);
+  --color-error: #ff6b3d;
+  --color-error-soft: rgba(255, 107, 61, 0.18);
+  --color-info: #ffcc66;
+  --color-info-soft: rgba(255, 204, 102, 0.16);
+
+  --color-activity-bg: rgba(20, 20, 20, 0.6);
+  --color-activity-active: rgba(255, 180, 50, 0.12);
+  --color-activity-hover: rgba(255, 180, 50, 0.06);
+  --color-activity-icon: #c9a14a;
+  --color-activity-icon-active: #ffb432;
+
+  --color-sidebar-bg: rgba(13, 13, 13, 0.7);
+  --color-sidebar-border: #2a2218;
+  --color-panel-bg: #141414;
+  --color-panel-border: #2a2218;
+
+  --color-glass-bg: rgba(20, 20, 20, 0.65);
+  --color-glass-border: rgba(42, 34, 24, 0.85);
+  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-overlay-light: rgba(255, 180, 50, 0.05);
+
+  --color-selection-bg: rgba(255, 180, 50, 0.25);
+  --color-focus-ring: rgba(255, 180, 50, 0.45);
+  --color-link: #ffb432;
+  --color-link-hover: #ffc55a;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.8);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.9);
+  --shadow-glow: 0 0 28px rgba(255, 180, 50, 0.4);
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   Theme: Dark (backward-compatibility alias)
+   Mirrors dark-slate for legacy `data-theme="dark"` references.
+   ========================================================================== */
+[data-theme="dark"] {
+  --color-bg: #1a1d23;
+  --color-surface: #25282e;
+  --color-surface-hover: #2f3239;
+
+  --color-text: #e0e0e0;
+  --color-text-secondary: #a8aab0;
+  --color-text-tertiary: #707378;
+
+  --color-border: #353941;
+  --color-border-strong: #444a55;
+
+  --color-primary: #e0e0e0;
+  --color-primary-hover: #ffffff;
+
+  --color-accent: #6b8cff;
+  --color-accent-hover: #8aa3ff;
+  --color-accent-soft: rgba(107, 140, 255, 0.16);
+
+  --color-success: #5acd8a;
+  --color-success-soft: rgba(90, 205, 138, 0.16);
+  --color-warning: #f0b04a;
+  --color-warning-soft: rgba(240, 176, 74, 0.18);
+  --color-error: #ff6b6b;
+  --color-error-soft: rgba(255, 107, 107, 0.16);
+  --color-info: #6b8cff;
+  --color-info-soft: rgba(107, 140, 255, 0.16);
+
+  --color-activity-bg: rgba(37, 40, 46, 0.6);
+  --color-activity-active: rgba(107, 140, 255, 0.12);
+  --color-activity-hover: rgba(107, 140, 255, 0.06);
+  --color-activity-icon: #a8aab0;
+  --color-activity-icon-active: #6b8cff;
+
+  --color-sidebar-bg: rgba(30, 33, 39, 0.7);
+  --color-sidebar-border: #353941;
+  --color-panel-bg: #25282e;
+  --color-panel-border: #353941;
+
+  --color-glass-bg: rgba(37, 40, 46, 0.65);
+  --color-glass-border: rgba(53, 57, 65, 0.8);
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-overlay-light: rgba(255, 255, 255, 0.05);
+
+  --color-selection-bg: rgba(107, 140, 255, 0.22);
+  --color-focus-ring: rgba(107, 140, 255, 0.4);
+  --color-link: #8aa3ff;
+  --color-link-hover: #a8b8ff;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 24px rgba(107, 140, 255, 0.35);
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.25);
 }
