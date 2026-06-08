@@ -1,5 +1,5 @@
 import os
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -20,11 +20,6 @@ def _make_worktree_info(task_id=None):
 def manager(tmp_path):
     """创建 WorktreeManager 实例，使用临时目录。"""
     return WorktreeManager(base_path=str(tmp_path))
-
-
-@pytest.fixture
-def project_id():
-    return uuid4()
 
 
 @pytest.fixture
@@ -59,11 +54,11 @@ def test_manager_init(tmp_path):
 
 @pytest.mark.asyncio
 @patch("neuralswarm.core.git.worktree.WorktreeManager._run_git", new_callable=AsyncMock)
-async def test_create(mock_run_git, manager, project_id, task_id):
+async def test_create(mock_run_git, manager, task_id):
     """create 应创建 worktree 目录并注册到 active_worktrees。"""
     mock_run_git.return_value = ""
 
-    info = await manager.create(project_id, task_id)
+    info = await manager.create(task_id)
 
     # 验证返回的 info
     assert isinstance(info, WorktreeInfo)
@@ -86,12 +81,12 @@ async def test_create(mock_run_git, manager, project_id, task_id):
 
 @pytest.mark.asyncio
 @patch("neuralswarm.core.git.worktree.WorktreeManager._run_git", new_callable=AsyncMock)
-async def test_create_git_failure(mock_run_git, manager, project_id, task_id):
+async def test_create_git_failure(mock_run_git, manager, task_id):
     """create 在 git 命令失败时应抛出 RuntimeError。"""
     mock_run_git.side_effect = RuntimeError("git command failed: fatal: ...")
 
     with pytest.raises(RuntimeError, match="git command failed"):
-        await manager.create(project_id, task_id)
+        await manager.create(task_id)
 
     # 不应注册到 active_worktrees
     assert task_id not in manager.active_worktrees
@@ -111,11 +106,11 @@ async def test_remove(mock_run_git, manager, task_id):
     # 验证从 active_worktrees 移除
     assert task_id not in manager.active_worktrees
 
-    # 验证 git 命令调用（worktree remove + branch -d）
+    # 验证 git 命令调用（worktree remove + branch -D）
     assert mock_run_git.call_count == 2
     calls = [call[0] for call in mock_run_git.call_args_list]
     assert ("worktree", "remove", info.path) in calls
-    assert ("branch", "-d", info.branch) in calls
+    assert ("branch", "-D", info.branch) in calls
 
 
 @pytest.mark.asyncio
@@ -128,7 +123,7 @@ async def test_remove_not_found(manager, task_id):
 @pytest.mark.asyncio
 @patch("neuralswarm.core.git.worktree.WorktreeManager._run_git", new_callable=AsyncMock)
 async def test_remove_git_failure(mock_run_git, manager, task_id):
-    """remove 在 git 命令失败时应抛出 RuntimeError。"""
+    """remove 在 worktree remove 失败时应抛出 RuntimeError 并保留 active_worktrees。"""
     info = _make_worktree_info(task_id)
     manager.active_worktrees[task_id] = info
     mock_run_git.side_effect = RuntimeError("git command failed")
@@ -136,8 +131,25 @@ async def test_remove_git_failure(mock_run_git, manager, task_id):
     with pytest.raises(RuntimeError, match="git command failed"):
         await manager.remove(task_id)
 
-    # active_worktrees 不应被清理（命令失败）
+    # active_worktrees 不应被清理（worktree remove 失败）
     assert task_id in manager.active_worktrees
+
+
+@pytest.mark.asyncio
+@patch("neuralswarm.core.git.worktree.WorktreeManager._run_git", new_callable=AsyncMock)
+async def test_remove_branch_delete_failure(mock_run_git, manager, task_id):
+    """remove 在 branch -D 失败时仍应清理 active_worktrees（不产生 ghost 条目）。"""
+    info = _make_worktree_info(task_id)
+    manager.active_worktrees[task_id] = info
+
+    # 第一次调用 (worktree remove) 成功，第二次 (branch -D) 失败
+    mock_run_git.side_effect = ["", RuntimeError("branch delete failed")]
+
+    # 不应抛出异常（branch 失败被 catch）
+    await manager.remove(task_id)
+
+    # active_worktrees 应被清理
+    assert task_id not in manager.active_worktrees
 
 
 @pytest.mark.asyncio
@@ -156,6 +168,7 @@ async def test_merge(mock_run_git, manager, task_id):
         "--no-ff",
         "-m",
         f"Merge task {task_id}",
+        cwd=manager.base_path,
     )
 
 

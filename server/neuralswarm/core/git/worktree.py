@@ -34,7 +34,7 @@ class WorktreeManager:
         self.worktrees_dir = os.path.join(base_path, ".neuralswarm", "worktrees")
         self.active_worktrees: dict[UUID, WorktreeInfo] = {}  # task_id -> info
 
-    async def create(self, project_id: UUID, task_id: UUID) -> WorktreeInfo:
+    async def create(self, task_id: UUID) -> WorktreeInfo:
         """为 Task 创建 worktree。
 
         1. 确保 .neuralswarm/worktrees/ 目录存在
@@ -43,7 +43,6 @@ class WorktreeManager:
         4. 注册到 active_worktrees
 
         Args:
-            project_id: 项目 ID。
             task_id: 任务 ID。
 
         Returns:
@@ -75,7 +74,7 @@ class WorktreeManager:
 
         1. 从 active_worktrees 获取 info
         2. git worktree remove <path>
-        3. git branch -d <branch>
+        3. git branch -D <branch>
         4. 从 active_worktrees 移除
 
         Args:
@@ -92,7 +91,14 @@ class WorktreeManager:
         logger.info("Removing worktree for task %s: %s", task_id, info.path)
 
         await self._run_git("worktree", "remove", info.path)
-        await self._run_git("branch", "-d", info.branch)
+
+        # Use -D (force) and wrap in try/except: if branch deletion fails
+        # after the worktree is already removed, we still clean up the
+        # active_worktrees dict to avoid "ghost" entries.
+        try:
+            await self._run_git("branch", "-D", info.branch)
+        except RuntimeError:
+            logger.warning("Failed to delete branch %s, skipping", info.branch)
 
         del self.active_worktrees[task_id]
         logger.info("Worktree removed for task %s", task_id)
@@ -122,6 +128,7 @@ class WorktreeManager:
             "--no-ff",
             "-m",
             f"Merge task {task_id}",
+            cwd=self.base_path,
         )
 
         logger.info("Branch %s merged for task %s", info.branch, task_id)
