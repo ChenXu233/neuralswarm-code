@@ -138,7 +138,7 @@ class WorkerAgent:
                 "conflict": None,
             }
 
-    async def _execute_shell(self, command: str) -> dict:
+    async def _execute_shell(self, command: str, timeout: float = 60.0) -> dict:
         """执行 shell 命令。"""
         try:
             logger.debug(
@@ -150,7 +150,9 @@ class WorkerAgent:
                 stderr=asyncio.subprocess.PIPE,
                 cwd=self.worktree_path,
             )
-            stdout, stderr = await proc.communicate()
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=timeout
+            )
 
             stdout_text = stdout.decode("utf-8", errors="replace")
             stderr_text = stderr.decode("utf-8", errors="replace")
@@ -173,6 +175,19 @@ class WorkerAgent:
             return {
                 "success": True,
                 "output": stdout_text,
+                "conflict": None,
+            }
+        except asyncio.TimeoutError:
+            proc.kill()
+            logger.warning(
+                "Agent %s shell command timed out after %ss: %s",
+                self.agent_id,
+                timeout,
+                command,
+            )
+            return {
+                "success": False,
+                "output": f"Command timed out after {timeout}s",
                 "conflict": None,
             }
         except Exception as e:

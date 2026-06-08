@@ -179,6 +179,21 @@ async def test_shell_failure(worker):
     assert result["conflict"] is None
 
 
+# ── execute_subtask: shell timeout ────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_shell_timeout(worker):
+    """shell 命令超时应返回超时错误。"""
+    # 使用 sleep 命令模拟长时间运行的进程，超时设为 1 秒
+    result = await worker._execute_shell("sleep 30", timeout=1.0)
+
+    assert result["success"] is False
+    assert "timed out" in result["output"]
+    assert "1.0s" in result["output"]
+    assert result["conflict"] is None
+
+
 # ── execute_subtask: unknown type ─────────────────────────────────────
 
 
