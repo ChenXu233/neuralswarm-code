@@ -36,8 +36,7 @@ def _make_mock_repo():
 async def test_agent_runtime_start():
     """start() 应更新状态为 RUNNING。"""
     model = _make_mock_agent_model()
-    pool = AgentPool()
-    runtime = AgentRuntime(agent_model=model, pool=pool)
+    runtime = AgentRuntime(agent_model=model)
 
     repo = _make_mock_repo()
     await runtime.start(repo)
@@ -51,8 +50,7 @@ async def test_agent_runtime_start():
 async def test_agent_runtime_stop_completed():
     """stop() 默认将状态设为 COMPLETED。"""
     model = _make_mock_agent_model()
-    pool = AgentPool()
-    runtime = AgentRuntime(agent_model=model, pool=pool)
+    runtime = AgentRuntime(agent_model=model)
 
     repo = _make_mock_repo()
     await runtime.stop(repo)
@@ -66,8 +64,7 @@ async def test_agent_runtime_stop_completed():
 async def test_agent_runtime_stop_failed():
     """stop() 支持设置 FAILED 状态。"""
     model = _make_mock_agent_model()
-    pool = AgentPool()
-    runtime = AgentRuntime(agent_model=model, pool=pool)
+    runtime = AgentRuntime(agent_model=model)
 
     repo = _make_mock_repo()
     await runtime.stop(repo, final_status=AgentStatus.FAILED)
@@ -79,8 +76,7 @@ async def test_agent_runtime_stop_failed():
 def test_agent_runtime_exposes_model_fields():
     """AgentRuntime 应暴露 model 的 id、type、status。"""
     model = _make_mock_agent_model(agent_type=AgentType.SCHEDULER)
-    pool = AgentPool()
-    runtime = AgentRuntime(agent_model=model, pool=pool)
+    runtime = AgentRuntime(agent_model=model)
 
     assert runtime.id == model.id
     assert runtime.type == AgentType.SCHEDULER
@@ -90,8 +86,8 @@ def test_agent_runtime_exposes_model_fields():
 # ── AgentPool 测试 ──────────────────────────────────────────────────
 
 
-@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 @pytest.mark.asyncio
+@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 async def test_create_agent_registers_in_pool(MockAgent):
     """create_agent 应在 DB 创建记录并注册到 active_agents。"""
     mock_agent_instance = _make_mock_agent_model()
@@ -116,13 +112,11 @@ async def test_create_agent_registers_in_pool(MockAgent):
     assert pool.active_agents[runtime.id] is runtime
 
     # 验证 DB 操作
-    repo.session.add.assert_called_once_with(mock_agent_instance)
-    repo.session.commit.assert_called_once()
-    repo.session.refresh.assert_called_once_with(mock_agent_instance)
+    repo.create_agent.assert_called_once_with(mock_agent_instance)
 
 
-@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 @pytest.mark.asyncio
+@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 async def test_create_agent_with_parent(MockAgent):
     """create_agent 支持 parent_id 参数。"""
     mock_agent_instance = _make_mock_agent_model()
@@ -148,8 +142,8 @@ async def test_create_agent_with_parent(MockAgent):
     assert call_kwargs["parent_id"] == parent_id
 
 
-@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 @pytest.mark.asyncio
+@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 async def test_create_agent_default_name(MockAgent):
     """未指定 name 时应使用 agent_type 生成默认名称。"""
     mock_agent_instance = _make_mock_agent_model()
@@ -172,8 +166,8 @@ async def test_create_agent_default_name(MockAgent):
     assert call_kwargs["name"] == "agent-scheduler"
 
 
-@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 @pytest.mark.asyncio
+@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 async def test_create_agent_passes_all_params(MockAgent):
     """create_agent 应将所有参数传递给 Agent 构造函数。"""
     mock_agent_instance = _make_mock_agent_model()
@@ -205,8 +199,8 @@ async def test_create_agent_passes_all_params(MockAgent):
     assert call_kwargs["name"] == "my-agent"
 
 
-@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 @pytest.mark.asyncio
+@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 async def test_destroy_agent_removes_from_pool(MockAgent):
     """destroy_agent 应从 active_agents 移除并更新 DB 状态。"""
     mock_agent_instance = _make_mock_agent_model()
@@ -233,8 +227,8 @@ async def test_destroy_agent_removes_from_pool(MockAgent):
     repo.update_status.assert_called_with(agent_id, AgentStatus.COMPLETED)
 
 
-@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 @pytest.mark.asyncio
+@patch("neuralswarm.core.scheduler.agent_pool.Agent")
 async def test_destroy_agent_failed(MockAgent):
     """destroy_agent(failed=True) 应将状态设为 FAILED。"""
     mock_agent_instance = _make_mock_agent_model()
@@ -273,7 +267,7 @@ def test_get_agent():
     """get_agent 应返回对应的 runtime。"""
     pool = AgentPool()
     model = _make_mock_agent_model()
-    runtime = AgentRuntime(agent_model=model, pool=pool)
+    runtime = AgentRuntime(agent_model=model)
     pool.active_agents[model.id] = runtime
 
     assert pool.get_agent(model.id) is runtime
@@ -286,7 +280,7 @@ def test_list_agents():
     ids = set()
     for _ in range(3):
         model = _make_mock_agent_model()
-        runtime = AgentRuntime(agent_model=model, pool=pool)
+        runtime = AgentRuntime(agent_model=model)
         pool.active_agents[model.id] = runtime
         ids.add(model.id)
 

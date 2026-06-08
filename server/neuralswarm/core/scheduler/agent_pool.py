@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from uuid import UUID, uuid4
-
+from uuid import UUID
 from neuralswarm.core.repository import AgentRepository
 from neuralswarm.models import Agent
 from neuralswarm.models.enums import AgentStatus, AgentType
@@ -14,9 +13,8 @@ logger = logging.getLogger(__name__)
 class AgentRuntime:
     """Agent 运行时包装器，组合 DB 模型与运行时状态。"""
 
-    def __init__(self, agent_model: Agent, pool: AgentPool):
+    def __init__(self, agent_model: Agent):
         self.model = agent_model
-        self.pool = pool
         self.id: UUID = agent_model.id
         self.type: AgentType = agent_model.agent_type
         self.status: AgentStatus = agent_model.status
@@ -64,7 +62,6 @@ class AgentPool:
         3. 注册到 active_agents
         """
         agent = Agent(
-            id=uuid4(),
             project_id=project_id,
             name=name or f"agent-{agent_type.value}",
             agent_type=agent_type,
@@ -76,11 +73,13 @@ class AgentPool:
             worktree_path=worktree_path,
         )
 
-        agent_repo.session.add(agent)
-        await agent_repo.session.commit()
-        await agent_repo.session.refresh(agent)
+        try:
+            agent = await agent_repo.create_agent(agent)
+        except Exception:
+            logger.exception("Failed to create agent (type=%s, task=%s)", agent_type, task_id)
+            raise
 
-        runtime = AgentRuntime(agent_model=agent, pool=self)
+        runtime = AgentRuntime(agent_model=agent)
         self.active_agents[agent.id] = runtime
         logger.info("Agent %s created (type=%s, task=%s)", agent.id, agent_type, task_id)
         return runtime

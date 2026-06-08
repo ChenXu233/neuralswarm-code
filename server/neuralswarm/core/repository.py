@@ -34,6 +34,13 @@ class AgentRepository:
         )
         await self.session.commit()
 
+    async def create_agent(self, agent: Agent) -> Agent:
+        """创建 Agent。"""
+        self.session.add(agent)
+        await self.session.commit()
+        await self.session.refresh(agent)
+        return agent
+
     async def create_task(self, task: Task) -> Task:
         """创建任务。"""
         self.session.add(task)
