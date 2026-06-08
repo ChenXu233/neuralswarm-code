@@ -17,13 +17,20 @@ defineEmits<{
   select: [server: Server]
 }>()
 
-const { theme, setTheme } = useTheme()
+const { theme, setTheme, fontSize, setFontSize } = useTheme()
 
 const themes: { value: Theme; label: string }[] = [
   { value: 'warm-stone', label: 'Warm Stone' },
   { value: 'dark-slate', label: 'Dark Slate' },
   { value: 'pure-minimal', label: 'Pure Minimal' },
   { value: 'amber-glow', label: 'Amber Glow' },
+]
+
+const fontSizes = [
+  { value: 'small' as const, label: 'S' },
+  { value: 'medium' as const, label: 'M' },
+  { value: 'large' as const, label: 'L' },
+  { value: 'xl' as const, label: 'XL' },
 ]
 </script>
 
@@ -63,9 +70,24 @@ const themes: { value: Theme; label: string }[] = [
         </div>
       </div>
 
-      <!-- Font -->
+      <!-- Font Size -->
       <div class="section">
-        <div class="section-label">FONT</div>
+        <div class="section-label">FONT SIZE</div>
+        <div class="font-size-options">
+          <button
+            v-for="opt in fontSizes"
+            :key="opt.value"
+            :class="['size-btn', { active: fontSize === opt.value }]"
+            @click="setFontSize(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Font Family -->
+      <div class="section">
+        <div class="section-label">FONT FAMILY</div>
         <div class="font-input">
           <input placeholder="Custom font stack..." spellcheck="false" />
         </div>
@@ -182,5 +204,33 @@ const themes: { value: Theme; label: string }[] = [
 
 .font-input input:focus {
   border-color: var(--color-accent);
+}
+
+.font-size-options {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.size-btn {
+  flex: 1;
+  padding: 5px 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.size-btn:hover {
+  border-color: var(--color-text-tertiary);
+}
+
+.size-btn.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 </style>

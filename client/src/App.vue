@@ -59,7 +59,7 @@ loadProjects()
         :active-task-id="currentTask?.id"
         @select="handleSelectTask"
       />
-      <FilesPanel v-else-if="activePanel === 'files'" />
+      <FilesPanel v-else-if="activePanel === 'files'" :has-open-project="!!selectedProject" />
       <PluginsPanel v-else-if="activePanel === 'plugins'" />
     </Sidebar>
 
