@@ -12,7 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class ConflictManager:
-    """冲突管理器 - 检测、通知、解决冲突。"""
+    """冲突管理器 - 检测、通知、解决冲突。
+
+    注意：每个 task_id 仅支持一个订阅者（单订阅者模型）。
+    如果同一 task_id 多次调用 subscribe，会复用同一个队列；
+    任何一次 unsubscribe 都会删除该队列，导致其他订阅者断开。
+    这是为个人使用场景设计的简化实现。
+    """
 
     def __init__(self) -> None:
         self.pending_conflicts: dict[UUID, Conflict] = {}
@@ -93,6 +99,8 @@ class ConflictManager:
     def subscribe(self, task_id: UUID) -> asyncio.Queue[Conflict]:
         """订阅冲突事件。
 
+        每个 task_id 仅支持一个订阅者。重复订阅会返回同一个队列。
+
         Args:
             task_id: 任务 ID。
 
@@ -105,6 +113,9 @@ class ConflictManager:
 
     def unsubscribe(self, task_id: UUID) -> None:
         """取消订阅。
+
+        会直接删除该 task_id 的队列。如果同一 task_id 有其他订阅者，
+        它们也会失去队列（单订阅者模型的已知限制）。
 
         Args:
             task_id: 任务 ID。

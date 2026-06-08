@@ -15,10 +15,27 @@ router = APIRouter(tags=["websocket"])
 
 @router.websocket("/ws/conflicts/{task_id}")
 async def conflict_events(websocket: WebSocket, task_id: UUID):
-    """实时推送冲突事件。"""
-    await websocket.accept()
+    """实时推送冲突事件。
 
+    注意：每个 task_id 仅支持一个 WebSocket 订阅者。
+    如果已有订阅者，新连接会收到一条提示消息后被关闭。
+    """
     manager = get_conflict_manager()
+
+    # 单订阅者模型：如果该 task_id 已有订阅者，拒绝新连接
+    if task_id in manager._listeners:
+        await websocket.accept()
+        await websocket.send_json({
+            "type": "error",
+            "message": f"Task {task_id} already has an active conflict subscriber.",
+        })
+        await websocket.close(code=4000, reason="duplicate subscriber")
+        logger.warning(
+            "Rejected duplicate conflict subscriber for task %s", task_id
+        )
+        return
+
+    await websocket.accept()
     queue = manager.subscribe(task_id)
 
     try:
