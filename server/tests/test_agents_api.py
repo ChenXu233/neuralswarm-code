@@ -20,38 +20,31 @@ def compile_jsonb_sqlite(type_, compiler, **kw):
     return "JSON"
 
 
-_engine = None
-_session_factory = None
-
-
 @pytest_asyncio.fixture
 async def client():
-    global _engine, _session_factory
-    _engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async with _engine.begin() as conn:
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
         await conn.run_sync(Project.__table__.create, checkfirst=True)
         await conn.run_sync(Agent.__table__.create, checkfirst=True)
 
-    _session_factory = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
+    session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def override_get_db():
-        async with _session_factory() as session:
+        async with session_factory() as session:
             yield session
 
     app = create_app()
     app.dependency_overrides[get_db] = override_get_db
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
-        yield c
+        yield c, session_factory
 
-    await _engine.dispose()
-    _engine = None
-    _session_factory = None
+    await engine.dispose()
 
 
-async def _create_test_data():
+async def _create_test_data(session_factory):
     """Helper to create test data using the session factory."""
-    async with _session_factory() as session:
+    async with session_factory() as session:
         project = Project(id=uuid.uuid4(), name="Test Project", path="/test/project")
         session.add(project)
         await session.commit()
@@ -86,7 +79,8 @@ async def _create_test_data():
 
 @pytest.mark.asyncio
 async def test_list_agents_empty(client):
-    resp = await client.get("/api/agents")
+    c, _ = client
+    resp = await c.get("/api/agents")
     assert resp.status_code == 200
     data = resp.json()
     assert "items" in data
@@ -97,22 +91,24 @@ async def test_list_agents_empty(client):
 
 @pytest.mark.asyncio
 async def test_get_agent_not_found(client):
-    resp = await client.get(f"/api/agents/{uuid.uuid4()}")
+    c, _ = client
+    resp = await c.get(f"/api/agents/{uuid.uuid4()}")
     assert resp.status_code == 404
     assert resp.json()["detail"] == "Agent not found"
 
 
 @pytest.mark.asyncio
 async def test_list_agents_with_pagination(client):
-    project, agents = await _create_test_data()
+    c, session_factory = client
+    project, agents = await _create_test_data(session_factory)
 
-    resp = await client.get("/api/agents", params={"limit": 2, "offset": 0})
+    resp = await c.get("/api/agents", params={"limit": 2, "offset": 0})
     assert resp.status_code == 200
     data = resp.json()
     assert len(data["items"]) == 2
     assert data["total"] == 3
 
-    resp = await client.get("/api/agents", params={"limit": 2, "offset": 2})
+    resp = await c.get("/api/agents", params={"limit": 2, "offset": 2})
     assert resp.status_code == 200
     data = resp.json()
     assert len(data["items"]) == 1
@@ -121,9 +117,10 @@ async def test_list_agents_with_pagination(client):
 
 @pytest.mark.asyncio
 async def test_list_agents_filter_by_status(client):
-    project, agents = await _create_test_data()
+    c, session_factory = client
+    project, agents = await _create_test_data(session_factory)
 
-    resp = await client.get("/api/agents", params={"status": "running"})
+    resp = await c.get("/api/agents", params={"status": "running"})
     assert resp.status_code == 200
     data = resp.json()
     assert len(data["items"]) == 1
@@ -132,9 +129,10 @@ async def test_list_agents_filter_by_status(client):
 
 @pytest.mark.asyncio
 async def test_list_agents_filter_by_agent_type(client):
-    project, agents = await _create_test_data()
+    c, session_factory = client
+    project, agents = await _create_test_data(session_factory)
 
-    resp = await client.get("/api/agents", params={"agent_type": "worker"})
+    resp = await c.get("/api/agents", params={"agent_type": "worker"})
     assert resp.status_code == 200
     data = resp.json()
     assert len(data["items"]) == 2
@@ -144,9 +142,10 @@ async def test_list_agents_filter_by_agent_type(client):
 
 @pytest.mark.asyncio
 async def test_list_agents_filter_by_project_id(client):
-    project, agents = await _create_test_data()
+    c, session_factory = client
+    project, agents = await _create_test_data(session_factory)
 
-    resp = await client.get("/api/agents", params={"project_id": str(project.id)})
+    resp = await c.get("/api/agents", params={"project_id": str(project.id)})
     assert resp.status_code == 200
     data = resp.json()
     assert len(data["items"]) == 3
@@ -156,10 +155,11 @@ async def test_list_agents_filter_by_project_id(client):
 
 @pytest.mark.asyncio
 async def test_get_agent_found(client):
-    project, agents = await _create_test_data()
+    c, session_factory = client
+    project, agents = await _create_test_data(session_factory)
     agent = agents[0]
 
-    resp = await client.get(f"/api/agents/{agent.id}")
+    resp = await c.get(f"/api/agents/{agent.id}")
     assert resp.status_code == 200
     data = resp.json()["data"]
     assert data["id"] == str(agent.id)

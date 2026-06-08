@@ -50,7 +50,7 @@ async def list_agents(
     result = await db.execute(stmt)
     agents = result.scalars().all()
 
-    return {
-        "items": [AgentResponse.model_validate(a).model_dump() for a in agents],
-        "total": total,
-    }
+    return AgentListResponse(
+        items=[AgentResponse.model_validate(a) for a in agents],
+        total=total,
+    ).model_dump()
