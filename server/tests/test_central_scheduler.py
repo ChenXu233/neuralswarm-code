@@ -8,7 +8,6 @@ from neuralswarm.core.scheduler.agent_pool import AgentPool, AgentRuntime
 from neuralswarm.core.scheduler.central import CentralScheduler
 from neuralswarm.core.git.worktree import WorktreeManager, WorktreeInfo
 from neuralswarm.core.concurrency.hash_guard import HashGuard
-from neuralswarm.core.concurrency.conflict_manager import ConflictManager
 from neuralswarm.models.enums import AgentStatus, AgentType
 
 
@@ -46,11 +45,9 @@ def _make_central_scheduler():
     """创建 CentralScheduler 实例，使用 mock 组件。"""
     agent_pool = AgentPool(max_concurrent=5)
     worktree_manager = MagicMock(spec=WorktreeManager)
-    conflict_manager = MagicMock(spec=ConflictManager)
     return CentralScheduler(
         agent_pool=agent_pool,
         worktree_manager=worktree_manager,
-        conflict_manager=conflict_manager,
     )
 
 
@@ -261,12 +258,12 @@ async def test_complete_task_merges_and_cleans_up(MockAgent):
 
 
 @pytest.mark.asyncio
-async def test_complete_task_handles_merge_failure():
-    """complete_task 在合并失败时应继续清理。"""
+async def test_complete_task_preserves_worktree_on_merge_conflict():
+    """complete_task 在合并冲突(RuntimeError)时应保留 worktree 不删除。"""
     task_id = uuid4()
 
     scheduler = _make_central_scheduler()
-    scheduler.worktree_manager.merge = AsyncMock(side_effect=RuntimeError("merge failed"))
+    scheduler.worktree_manager.merge = AsyncMock(side_effect=RuntimeError("merge conflict"))
     scheduler.worktree_manager.remove = AsyncMock()
 
     repo = _make_mock_repo()
@@ -274,7 +271,25 @@ async def test_complete_task_handles_merge_failure():
     # 不应抛异常
     await scheduler.complete_task(task_id, repo)
 
-    # worktree 仍应被删除
+    # worktree 不应被删除（保留未合并的提交）
+    scheduler.worktree_manager.remove.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_complete_task_removes_worktree_on_key_error():
+    """complete_task 在 worktree 不存在(KeyError)时仍应尝试删除。"""
+    task_id = uuid4()
+
+    scheduler = _make_central_scheduler()
+    scheduler.worktree_manager.merge = AsyncMock(side_effect=KeyError("not found"))
+    scheduler.worktree_manager.remove = AsyncMock()
+
+    repo = _make_mock_repo()
+
+    # 不应抛异常
+    await scheduler.complete_task(task_id, repo)
+
+    # worktree 仍应被尝试删除
     scheduler.worktree_manager.remove.assert_called_once_with(task_id)
 
 

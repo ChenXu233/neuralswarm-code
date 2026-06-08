@@ -6,7 +6,6 @@ from uuid import UUID
 from neuralswarm.core.scheduler.agent_pool import AgentPool, AgentRuntime
 from neuralswarm.core.git.worktree import WorktreeManager
 from neuralswarm.core.concurrency.hash_guard import HashGuard
-from neuralswarm.core.concurrency.conflict_manager import ConflictManager
 from neuralswarm.core.repository import AgentRepository
 from neuralswarm.models.enums import AgentType, AgentStatus
 
@@ -20,11 +19,9 @@ class CentralScheduler:
         self,
         agent_pool: AgentPool,
         worktree_manager: WorktreeManager,
-        conflict_manager: ConflictManager,
     ):
         self.agent_pool = agent_pool
         self.worktree_manager = worktree_manager
-        self.conflict_manager = conflict_manager
         self.task_agents: dict[UUID, list[UUID]] = {}  # task_id -> [agent_ids]
         self.task_hash_guards: dict[UUID, HashGuard] = {}  # task_id -> HashGuard
 
@@ -103,7 +100,7 @@ class CentralScheduler:
                 agent_repo=agent_repo,
                 agent_type=AgentType.WORKER,
                 task_id=task_id,
-                project_id=subtask.get("project_id", UUID(int=0)),
+                project_id=subtask.get("project_id"),
                 worktree_path=worktree_info.path,
                 llm_config=llm_config,
                 tools=tools,
@@ -133,11 +130,17 @@ class CentralScheduler:
         4. 删除 worktree
         """
         # 1. 合并 worktree
+        merge_failed = False
         try:
             await self.worktree_manager.merge(task_id)
             logger.info("Worktree merged for task %s", task_id)
-        except (KeyError, RuntimeError) as e:
+        except KeyError as e:
             logger.warning("Failed to merge worktree for task %s: %s", task_id, e)
+        except RuntimeError as e:
+            logger.warning(
+                "Merge conflict for task %s, preserving worktree: %s", task_id, e
+            )
+            merge_failed = True
 
         # 2. 销毁所有 Agent
         agent_ids = self.task_agents.get(task_id, [])
@@ -149,11 +152,16 @@ class CentralScheduler:
         if hash_guard is not None:
             hash_guard.clear()
 
-        # 4. 删除 worktree
-        try:
-            await self.worktree_manager.remove(task_id)
-        except (KeyError, RuntimeError) as e:
-            logger.warning("Failed to remove worktree for task %s: %s", task_id, e)
+        # 4. 删除 worktree (仅在合并成功或 worktree 不存在时)
+        if not merge_failed:
+            try:
+                await self.worktree_manager.remove(task_id)
+            except (KeyError, RuntimeError) as e:
+                logger.warning("Failed to remove worktree for task %s: %s", task_id, e)
+        else:
+            logger.info(
+                "Skipping worktree removal for task %s due to merge conflict", task_id
+            )
 
         # 5. 清理 task_agents 记录
         self.task_agents.pop(task_id, None)
