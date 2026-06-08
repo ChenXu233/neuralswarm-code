@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from uuid import UUID
 
 from sqlalchemy import select
@@ -67,6 +68,10 @@ class TaskService:
 
         return task
 
+    def _is_git_repo(self, path: str) -> bool:
+        """检查路径是否是 git 仓库。"""
+        return os.path.isdir(os.path.join(path, ".git"))
+
     async def _execute_agent(self, task_id: UUID, project: Project, agent_model: AgentModel, llm_model: LLM, prompt: str):
         """Execute agent in background."""
         task_id_str = str(task_id)
@@ -75,53 +80,22 @@ class TaskService:
             await redis_client.set_task_status(task_id_str, "running")
             await redis_client.publish_event(task_id_str, {"type": "status", "data": {"status": "running"}})
 
-            # Create tool executor based on project type
-            if project.project_type == "local":
-                from neuralswarm.services.bridge import BridgeRouter
-                from neuralswarm.api.ws_client import get_client_manager
-                bridge = BridgeRouter(get_client_manager())
-                tool_executor = ToolExecutor(
-                    project_path="",
-                    bridge=bridge,
-                    project_type="local",
-                    project_uri=project.path,
+            # 获取项目路径
+            project_path = project.path
+            if project_path.startswith("server:///"):
+                project_path = project_path[len("server://"):]
+            elif project_path.startswith("server://"):
+                project_path = project_path[len("server://"):]
+
+            # 检查是否是 git 仓库，决定使用调度路径还是单 Agent 路径
+            if project.project_type == "local" or not self._is_git_repo(project_path):
+                result = await self._execute_single_agent(
+                    task_id, task_id_str, project, agent_model, llm_model, prompt, project_path
                 )
             else:
-                project_path = project.path
-                if project_path.startswith("server:///"):
-                    project_path = project_path[len("server://"):]
-                elif project_path.startswith("server://"):
-                    project_path = project_path[len("server://"):]
-                tool_executor = ToolExecutor(project_path=project_path)
-
-            tool_executor.register_defaults()
-
-            # Create agent repository
-            agent_repo = AgentRepository(self.db)
-
-            # Create agent
-            agent = Agent(
-                agent_id=agent_model.id,
-                project_id=project.id,
-                tools=tool_executor.list_tools(),
-                llm_gateway=self.llm_gateway,
-                agent_repo=agent_repo,
-                tool_executor=tool_executor,
-                context_manager=ContextManager(),
-            )
-
-            # Event callback for Redis
-            async def on_event(event_type: str, data: dict):
-                await redis_client.publish_event(task_id_str, {"type": event_type, "data": data})
-
-            # Execute
-            result = await agent.execute(
-                task=prompt,
-                llm_id=llm_model.id,
-                provider=llm_model.provider,
-                model_id=llm_model.model_id,
-                on_event=on_event,
-            )
+                result = await self._execute_scheduled(
+                    task_id, task_id_str, project, agent_model, llm_model, prompt, project_path
+                )
 
             # Update task
             task = await self.db.get(Task, task_id)
@@ -142,6 +116,125 @@ class TaskService:
 
             await redis_client.set_task_status(task_id_str, "failed")
             await redis_client.publish_event(task_id_str, {"type": "error", "data": {"message": str(e)}})
+
+    async def _execute_single_agent(
+        self, task_id: UUID, task_id_str: str,
+        project: Project, agent_model: AgentModel, llm_model: LLM,
+        prompt: str, project_path: str,
+    ) -> str:
+        """单 Agent 执行路径（非 git 仓库或 local 项目）。"""
+        # Create tool executor
+        if project.project_type == "local":
+            from neuralswarm.services.bridge import BridgeRouter
+            from neuralswarm.api.ws_client import get_client_manager
+            bridge = BridgeRouter(get_client_manager())
+            tool_executor = ToolExecutor(
+                project_path="",
+                bridge=bridge,
+                project_type="local",
+                project_uri=project.path,
+            )
+        else:
+            tool_executor = ToolExecutor(project_path=project_path)
+
+        tool_executor.register_defaults()
+
+        agent_repo = AgentRepository(self.db)
+        agent = Agent(
+            agent_id=agent_model.id,
+            project_id=project.id,
+            tools=tool_executor.list_tools(),
+            llm_gateway=self.llm_gateway,
+            agent_repo=agent_repo,
+            tool_executor=tool_executor,
+            context_manager=ContextManager(),
+        )
+
+        async def on_event(event_type: str, data: dict):
+            await redis_client.publish_event(task_id_str, {"type": event_type, "data": data})
+
+        return await agent.execute(
+            task=prompt,
+            llm_id=llm_model.id,
+            provider=llm_model.provider,
+            model_id=llm_model.model_id,
+            on_event=on_event,
+        )
+
+    async def _execute_scheduled(
+        self, task_id: UUID, task_id_str: str,
+        project: Project, agent_model: AgentModel, llm_model: LLM,
+        prompt: str, project_path: str,
+    ) -> str:
+        """调度执行路径（git 仓库项目）。"""
+        from neuralswarm.core.scheduler.agent_pool import AgentPool
+        from neuralswarm.core.scheduler.central import CentralScheduler
+        from neuralswarm.core.scheduler.sub_scheduler import SubSchedulerAgent
+        from neuralswarm.core.concurrency.conflict_manager import ConflictManager
+        from neuralswarm.core.git.worktree import WorktreeManager
+
+        # 1. 创建调度组件
+        worktree_manager = WorktreeManager(base_path=project_path)
+        agent_pool = AgentPool(max_concurrent=5)
+        conflict_manager = ConflictManager()
+        agent_repo = AgentRepository(self.db)
+
+        scheduler = CentralScheduler(
+            agent_pool=agent_pool,
+            worktree_manager=worktree_manager,
+        )
+
+        # 2. 准备工具
+        tool_executor = ToolExecutor(project_path=project_path)
+        tool_executor.register_defaults()
+        tool_names = tool_executor.list_tools()
+
+        # 3. 提交任务 → 创建 worktree + sub-scheduler agent
+        runtime = await scheduler.submit_task(
+            task_id=task_id,
+            project_id=project.id,
+            agent_repo=agent_repo,
+            prompt=prompt,
+            llm_config={
+                "provider": llm_model.provider,
+                "model_id": llm_model.model_id,
+            },
+            tools=tool_names,
+        )
+
+        # 4. 创建 SubSchedulerAgent
+        hash_guard = scheduler.task_hash_guards[task_id]
+        sub_scheduler = SubSchedulerAgent(
+            agent_id=runtime.id,
+            task_id=task_id,
+            central_scheduler=scheduler,
+            hash_guard=hash_guard,
+            conflict_manager=conflict_manager,
+            llm_gateway=self.llm_gateway,
+            agent_repo=agent_repo,
+        )
+
+        # 5. 分析任务 → 生成计划
+        async def on_event(event_type: str, data: dict):
+            await redis_client.publish_event(task_id_str, {"type": event_type, "data": data})
+
+        await on_event("plan_start", {"prompt": prompt})
+        plan = await sub_scheduler.analyze_task(prompt)
+        await on_event("plan_generated", {"steps": len(plan), "plan": plan})
+
+        # 6. 执行计划
+        result = await sub_scheduler.execute_plan(plan)
+        await on_event("plan_completed", result)
+
+        # 7. 完成任务
+        await scheduler.complete_task(task_id, agent_repo=agent_repo)
+
+        # 返回结果摘要
+        if result["success"]:
+            outputs = [r.get("output", "") for r in result["results"]]
+            return "\n".join(outputs)
+        else:
+            return f"Errors: {', '.join(result['errors'])}"
 
     async def _get_or_create_default_agent(self, project_id: UUID) -> AgentModel:
         """Get or create default agent for project."""
