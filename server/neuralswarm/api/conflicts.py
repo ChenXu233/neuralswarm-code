@@ -41,7 +41,7 @@ async def decide_conflict(
     conflict = await db.get(Conflict, conflict_id)
     if not conflict:
         raise HTTPException(status_code=404, detail="Conflict not found")
-    if conflict.status != ConflictStatus.PENDING.value:
+    if conflict.status != ConflictStatus.PENDING:
         raise HTTPException(
             status_code=400,
             detail=f"Conflict already {conflict.status}",
