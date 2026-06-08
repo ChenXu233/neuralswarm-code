@@ -27,8 +27,8 @@ function formatJson(obj: any): string {
   <div :class="['tool-call', { expanded }]">
     <!-- Collapsed header -->
     <div class="tool-header" @click="toggle">
-      <ChevronRight v-if="!expanded" :size="12" class="chevron" />
-      <ChevronDown v-else :size="12" class="chevron" />
+      <ChevronRight v-if="!expanded" class="chevron" />
+      <ChevronDown v-else class="chevron" />
       <span class="tool-bullet">◆</span>
       <span class="tool-name">{{ tool }}</span>
       <span v-if="output" class="tool-stat done">done</span>

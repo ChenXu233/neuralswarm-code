@@ -33,8 +33,8 @@ function toggleThinking() {
         :class="['thinking-toggle', { expanded: thinkingExpanded }]"
         @click="toggleThinking"
       >
-        <ChevronRight v-if="!thinkingExpanded" :size="12" class="chevron" />
-        <ChevronDown v-else :size="12" class="chevron" />
+        <ChevronRight v-if="!thinkingExpanded" class="chevron" />
+        <ChevronDown v-else class="chevron" />
         <span class="thinking-label">Thinking</span>
         <span v-if="thinkingDone" class="thinking-duration">· done</span>
         <span v-else class="thinking-duration">· ...</span>
@@ -55,7 +55,7 @@ function toggleThinking() {
       @mouseleave="showEdit = false"
     >
       <button v-if="showEdit" class="edit-btn" @click="emit('edit')" title="Edit message">
-        <Pencil :size="14" />
+        <Pencil />
       </button>
       <div class="user-content">
         {{ content }}

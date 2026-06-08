@@ -17,7 +17,7 @@ defineProps<{
     </div>
 
     <div v-else class="empty-state">
-      <Folder :size="24" />
+      <Folder />
       <p class="empty-title">No project open</p>
       <p class="empty-desc">Open a project to browse its files,<br/>or start a global chat.</p>
     </div>
@@ -70,5 +70,10 @@ defineProps<{
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
   line-height: 1.5;
+}
+
+.empty-state .lucide {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 </style>

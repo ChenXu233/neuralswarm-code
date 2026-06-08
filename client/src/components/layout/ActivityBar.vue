@@ -25,21 +25,21 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
         title="Chat"
         @click="handleClick('chat')"
       >
-        <MessageSquare :size="20" />
+        <MessageSquare />
       </button>
       <button
         :class="['activity-btn', { active: activePanel === 'files' }]"
         title="Files"
         @click="handleClick('files')"
       >
-        <Folder :size="20" />
+        <Folder />
       </button>
       <button
         :class="['activity-btn', { active: activePanel === 'plugins' }]"
         title="Plugins"
         @click="handleClick('plugins')"
       >
-        <Puzzle :size="20" />
+        <Puzzle />
       </button>
     </div>
 
@@ -49,7 +49,7 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
         title="Settings"
         @click="handleClick('settings')"
       >
-        <Settings :size="20" />
+        <Settings />
         <span class="connection-dot"></span>
       </button>
     </div>
@@ -66,22 +66,22 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 0;
+  padding: 0.5rem 0;
   gap: 4px;
 }
 
 .activity-logo {
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   background: var(--color-primary);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-bg);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: var(--font-semibold);
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .top-icons, .bottom-icons {
@@ -100,8 +100,8 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
 }
 
 .activity-btn {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -111,6 +111,7 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
   background: transparent;
   color: var(--color-text-tertiary);
   position: relative;
+  font-size: 1.25rem;
   transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
@@ -127,9 +128,9 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
 .activity-btn.active::before {
   content: '';
   position: absolute;
-  left: -9px;
-  top: 6px;
-  bottom: 6px;
+  left: -0.5625rem;
+  top: 0.375rem;
+  bottom: 0.375rem;
   width: 2px;
   background: var(--color-accent);
   border-radius: 0 2px 2px 0;

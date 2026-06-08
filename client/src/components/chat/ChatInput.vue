@@ -42,7 +42,7 @@ function handleKeydown(e: KeyboardEvent) {
           :disabled="loading || !text.trim()"
           @click="handleSubmit"
         >
-          <Send :size="14" />
+          <Send />
         </button>
       </div>
     </div>

@@ -2,6 +2,9 @@
    Design Token System
    --------------------------------------------------------------------------
    Centralized CSS custom properties for the Neural Swarm design system.
+   All sizing tokens use rem for proportional scaling across screen sizes.
+   Set `:root { font-size: <N>px }` or via Settings to scale the entire UI.
+
    Themes are activated by setting `data-theme="<name>"` on <html> or <body>.
    The default (`:root`) is the Warm Stone light theme.
    ========================================================================== */
@@ -61,11 +64,11 @@
   --color-link-hover: #b06548;
 
   /* ---------- Radius scale ---------- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 28px;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
   --radius-full: 9999px;
 
   /* ---------- Shadows ---------- */
@@ -88,15 +91,15 @@
   --font-semibold: 600;
   --font-bold: 700;
 
-  --text-xs: 10px;
-  --text-sm: 12px;
-  --text-base: 14px;
-  --text-md: 15px;
-  --text-lg: 16px;
-  --text-xl: 20px;
-  --text-2xl: 26px;
-  --text-3xl: 32px;
-  --text-display: 36px;
+  --text-xs: 0.625rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.875rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.625rem;
+  --text-3xl: 2rem;
+  --text-display: 2.25rem;
 
   --leading-tight: 1.2;
   --leading-snug: 1.35;
@@ -120,12 +123,12 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ---------- Layout ---------- */
-  --activity-bar-width: 48px;
-  --sidebar-width: 240px;
-  --sidebar-width-collapsed: 0px;
-  --panel-min-width: 280px;
-  --header-height: 44px;
-  --status-bar-height: 24px;
+  --activity-bar-width: 4rem;
+  --sidebar-width: 15rem;
+  --sidebar-width-collapsed: 0;
+  --panel-min-width: 17.5rem;
+  --header-height: 2.75rem;
+  --status-bar-height: 1.5rem;
 
   /* ---------- Z-index scale ---------- */
   --z-base: 0;
@@ -138,15 +141,15 @@
   --z-tooltip: 2500;
 
   /* ---------- Spacing ---------- */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 }
 
 /* ==========================================================================

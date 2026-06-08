@@ -42,13 +42,13 @@ function formatTime(dateStr: string): string {
     <div class="panel-header">
       <span class="panel-title">TASKS</span>
       <button class="add-btn" @click="$emit('create')">
-        <Plus :size="14" />
+        <Plus />
       </button>
     </div>
 
     <!-- Search -->
     <div class="search-box">
-      <Search :size="12" />
+      <Search />
       <input placeholder="Filter tasks..." />
     </div>
 

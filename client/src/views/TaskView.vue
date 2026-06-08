@@ -62,7 +62,7 @@ async function handleSubmit(text: string) {
   <MainContent>
     <div class="chat-header">
       <button class="back-btn" @click="emit('back')">
-        <ArrowLeft :size="16" />
+        <ArrowLeft />
       </button>
       <span class="task-title">{{ project.name }}</span>
       <StatusDot :status="taskStatus" />

@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Base font-size: 16px (1rem baseline).
+     Adjust to scale the entire rem-based UI proportionally.
+     Large screens get a slightly larger base for better readability. */
+  font-size: 16px;
+}
+
 html, body {
   height: 100%;
   overflow: hidden;
@@ -36,6 +43,12 @@ a:hover {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* Lucide 图标继承 font-size 缩放 */
+.lucide {
+  width: 1em;
+  height: 1em;
 }
 
 /* 流式闪烁光标 */

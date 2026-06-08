@@ -5,7 +5,7 @@ import { Puzzle } from 'lucide-vue-next'
 <template>
   <div class="plugins-panel">
     <div class="empty-state">
-      <Puzzle :size="32" />
+      <Puzzle />
       <p>No plugins yet</p>
     </div>
   </div>
@@ -30,5 +30,10 @@ import { Puzzle } from 'lucide-vue-next'
 
 .empty-state p {
   font-size: var(--text-sm);
+}
+
+.empty-state .lucide {
+  width: 2rem;
+  height: 2rem;
 }
 </style>

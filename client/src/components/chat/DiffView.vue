@@ -53,8 +53,8 @@ async function handleCopy() {
   <div :class="['diff-view', { expanded }]">
     <!-- Header -->
     <div class="diff-header" @click="toggle">
-      <ChevronRight v-if="!expanded" :size="12" class="chevron" />
-      <ChevronDown v-else :size="12" class="chevron" />
+      <ChevronRight v-if="!expanded" class="chevron" />
+      <ChevronDown v-else class="chevron" />
       <span class="diff-name">{{ tool }}</span>
       <span class="diff-path">{{ filePath }}</span>
       <span v-if="addedCount" class="diff-count add">+{{ addedCount }}</span>
@@ -108,11 +108,11 @@ async function handleCopy() {
         <!-- Actions -->
         <div class="diff-actions">
           <button class="diff-action-btn" @click="handleCopy">
-            <Copy :size="12" />
+            <Copy />
             <span>{{ copied ? 'Copied' : 'Copy' }}</span>
           </button>
           <button class="diff-action-btn" @click="emit('undo')">
-            <Undo2 :size="12" />
+            <Undo2 />
             Undo
           </button>
         </div>

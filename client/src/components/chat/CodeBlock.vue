@@ -21,8 +21,8 @@ async function handleCopy(code: string) {
     <div class="code-header">
       <span class="language">{{ language || 'plaintext' }}</span>
       <button class="copy-btn" @click="handleCopy(code)">
-        <Check v-if="copied" :size="12" />
-        <Copy v-else :size="12" />
+        <Check v-if="copied" />
+        <Copy v-else />
         <span>{{ copied ? 'Copied' : 'Copy' }}</span>
       </button>
     </div>

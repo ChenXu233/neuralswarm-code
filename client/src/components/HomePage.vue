@@ -54,7 +54,7 @@ function formatTime(dateStr: string) {
                 class="project-item"
                 @click="emit('select', project)"
               >
-                <Folder :size="14" />
+                <Folder />
                 <span class="project-path">{{ project.name }}</span>
                 <span class="project-time">{{ formatTime(project.updated_at) }}</span>
               </div>
@@ -72,7 +72,7 @@ function formatTime(dateStr: string) {
             <div class="section-label">START A SESSION</div>
             <div class="options-list">
               <div v-if="canOpenLocalFolder()" class="option-item">
-                <Folder :size="16" />
+                <Folder />
                 <div class="option-info">
                   <div class="option-title">Open Folder</div>
                   <div class="option-desc">Browse a local directory</div>
@@ -80,14 +80,14 @@ function formatTime(dateStr: string) {
                 <span class="option-shortcut">Ctrl+O</span>
               </div>
               <div v-else class="option-item">
-                <Globe :size="16" />
+                <Globe />
                 <div class="option-info">
                   <div class="option-title">Connect Cloud</div>
                   <div class="option-desc">Link a cloud project</div>
                 </div>
               </div>
               <div class="option-item">
-                <Plus :size="16" />
+                <Plus />
                 <div class="option-info">
                   <div class="option-title">New Project</div>
                   <div class="option-desc">Start from scratch</div>
@@ -95,7 +95,7 @@ function formatTime(dateStr: string) {
                 <span class="option-shortcut">Ctrl+N</span>
               </div>
               <div class="option-item accent" @click="emit('global')">
-                <MessageSquare :size="16" />
+                <MessageSquare />
                 <div class="option-info">
                   <div class="option-title">Global Mode</div>
                   <div class="option-desc">No project context</div>
@@ -104,7 +104,7 @@ function formatTime(dateStr: string) {
               </div>
             </div>
             <button class="back-link" @click="showOptions = false">
-              <ArrowLeft :size="12" />
+              <ArrowLeft />
               Back
             </button>
           </div>
