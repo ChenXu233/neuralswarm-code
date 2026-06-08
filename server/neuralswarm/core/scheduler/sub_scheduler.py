@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
 from uuid import UUID
 
@@ -51,7 +49,7 @@ class SubSchedulerAgent:
                 }
         """
         # 简化实现：根据 prompt 生成一个基础计划
-        # LLM 集成将在后续版本中添加
+        # TODO: LLM 集成将在后续版本中添加
         plan = [
             {
                 "type": "shell",
@@ -163,7 +161,7 @@ class SubSchedulerAgent:
         results: list[dict] = []
 
         # 简化实现：串行执行所有子任务
-        # 完整版本将通过 central.allocate_workers 并行分配 Worker
+        # TODO: 完整版本将通过 central.allocate_workers 并行分配 Worker
         for subtask in subtasks:
             worker = WorkerAgent(
                 agent_id=self.agent_id,
