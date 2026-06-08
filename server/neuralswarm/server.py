@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from neuralswarm.api.agents import router as agents_router
 from neuralswarm.api.auth import router as auth_router
 from neuralswarm.api.clients import router as clients_router
 from neuralswarm.api.health import router as health_router
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix="/api")
     app.include_router(projects_router)
     app.include_router(tasks_router)
+    app.include_router(agents_router)
     app.include_router(ws_router)
     app.include_router(ws_client_router)
     app.include_router(clients_router)

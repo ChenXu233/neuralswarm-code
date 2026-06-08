@@ -43,7 +43,7 @@ class Agent(Base):
 
     # Relationships
     project: Mapped["Project"] = relationship(back_populates="agents")
-    tasks: Mapped[list["Task"]] = relationship(back_populates="agent")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="agent", foreign_keys="[Task.agent_id]")
     assigned_task: Mapped["Task | None"] = relationship(
         foreign_keys=[task_id], back_populates="assigned_agent", post_update=True
     )
