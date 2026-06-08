@@ -1,4 +1,4 @@
-from neuralswarm.models.enums import TaskStatus, AgentStatus, LockMode, MemoryLevel
+from neuralswarm.models.enums import TaskStatus, AgentStatus, AgentType, LockMode, MemoryLevel
 
 
 def test_task_status_values():
@@ -11,9 +11,16 @@ def test_task_status_values():
 
 def test_agent_status_values():
     assert AgentStatus.IDLE == "idle"
+    assert AgentStatus.PLANNING == "planning"
     assert AgentStatus.RUNNING == "running"
-    assert AgentStatus.PAUSED == "paused"
-    assert AgentStatus.STOPPED == "stopped"
+    assert AgentStatus.WAITING == "waiting"
+    assert AgentStatus.COMPLETED == "completed"
+    assert AgentStatus.FAILED == "failed"
+
+
+def test_agent_type_values():
+    assert AgentType.SCHEDULER == "scheduler"
+    assert AgentType.WORKER == "worker"
 
 
 def test_lock_mode_values():

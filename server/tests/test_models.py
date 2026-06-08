@@ -10,6 +10,7 @@ from neuralswarm.models import (
     Task,
     TaskStatus,
     AgentStatus,
+    AgentType,
     LockMode,
     MemoryLevel,
 )
@@ -55,6 +56,15 @@ def test_task_status_enum():
 def test_agent_status_enum():
     assert AgentStatus.IDLE == "idle"
     assert AgentStatus.RUNNING == "running"
+    assert AgentStatus.PLANNING == "planning"
+    assert AgentStatus.WAITING == "waiting"
+    assert AgentStatus.COMPLETED == "completed"
+    assert AgentStatus.FAILED == "failed"
+
+
+def test_agent_type_enum():
+    assert AgentType.SCHEDULER == "scheduler"
+    assert AgentType.WORKER == "worker"
 
 
 def test_lock_mode_enum():

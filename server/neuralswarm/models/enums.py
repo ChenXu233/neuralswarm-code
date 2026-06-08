@@ -10,10 +10,17 @@ class TaskStatus(str, Enum):
 
 
 class AgentStatus(str, Enum):
-    IDLE = "idle"
-    RUNNING = "running"
-    PAUSED = "paused"
-    STOPPED = "stopped"
+    IDLE = "idle"           # 空闲，等待任务
+    PLANNING = "planning"   # Sub-scheduler 对话规划中
+    RUNNING = "running"     # 执行中
+    WAITING = "waiting"     # 等待资源/锁
+    COMPLETED = "completed" # 完成
+    FAILED = "failed"       # 失败
+
+
+class AgentType(str, Enum):
+    SCHEDULER = "scheduler"   # Sub-scheduler LLM（规划+执行）
+    WORKER = "worker"         # Worker Agent（执行具体工作）
 
 
 class LockMode(str, Enum):
