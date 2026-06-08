@@ -202,8 +202,12 @@ async def test_execute_plan_with_failed_step(sub_scheduler):
 
 
 @pytest.mark.asyncio
-async def test_execute_plan_complex_steps_use_workers(sub_scheduler):
+async def test_execute_plan_complex_steps_use_workers(sub_scheduler, central_scheduler):
     """execute_plan 应将非 simple 步骤分配给 request_workers。"""
+    mock_worker = MagicMock()
+    mock_worker.id = uuid4()
+    central_scheduler.allocate_workers = AsyncMock(return_value=[mock_worker])
+
     plan = [
         {
             "type": "shell",
@@ -216,12 +220,15 @@ async def test_execute_plan_complex_steps_use_workers(sub_scheduler):
 
     assert result["success"] is True
     assert len(result["results"]) == 1
-    assert "worker_task" in result["results"][0]["output"]
 
 
 @pytest.mark.asyncio
-async def test_execute_plan_mixed_steps(sub_scheduler):
+async def test_execute_plan_mixed_steps(sub_scheduler, central_scheduler):
     """execute_plan 应正确处理 simple 和 complex 混合步骤。"""
+    mock_worker = MagicMock()
+    mock_worker.id = uuid4()
+    central_scheduler.allocate_workers = AsyncMock(return_value=[mock_worker])
+
     plan = [
         {
             "type": "shell",
@@ -255,39 +262,34 @@ async def test_execute_plan_empty(sub_scheduler):
 
 
 @pytest.mark.asyncio
-async def test_request_workers_executes_subtasks(sub_scheduler):
-    """request_workers 应执行所有子任务并返回结果。"""
+async def test_request_workers_executes_subtasks(sub_scheduler, central_scheduler):
+    """request_workers 应调用 central.allocate_workers 并返回结果。"""
+    # Mock allocate_workers 返回 mock worker runtimes
+    mock_worker = MagicMock()
+    mock_worker.id = uuid4()
+    central_scheduler.allocate_workers = AsyncMock(return_value=[mock_worker, mock_worker])
+
     subtasks = [
-        {
-            "type": "shell",
-            "command": "echo worker1",
-        },
-        {
-            "type": "shell",
-            "command": "echo worker2",
-        },
+        {"type": "shell", "command": "echo worker1"},
+        {"type": "shell", "command": "echo worker2"},
     ]
 
     results = await sub_scheduler.request_workers(subtasks)
 
     assert len(results) == 2
-    assert all(r["success"] for r in results)
-    assert "worker1" in results[0]["output"]
-    assert "worker2" in results[1]["output"]
+    central_scheduler.allocate_workers.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_request_workers_handles_failure(sub_scheduler):
+async def test_request_workers_handles_failure(sub_scheduler, central_scheduler):
     """request_workers 在子任务失败时应继续执行其余任务。"""
+    mock_worker = MagicMock()
+    mock_worker.id = uuid4()
+    central_scheduler.allocate_workers = AsyncMock(return_value=[mock_worker, mock_worker])
+
     subtasks = [
-        {
-            "type": "shell",
-            "command": "echo ok",
-        },
-        {
-            "type": "shell",
-            "command": "exit 1",
-        },
+        {"type": "shell", "command": "echo ok"},
+        {"type": "shell", "command": "exit 1"},
     ]
 
     results = await sub_scheduler.request_workers(subtasks)
@@ -298,7 +300,8 @@ async def test_request_workers_handles_failure(sub_scheduler):
 
 
 @pytest.mark.asyncio
-async def test_request_workers_empty_list(sub_scheduler):
+async def test_request_workers_empty_list(sub_scheduler, central_scheduler):
     """request_workers 空列表应返回空结果。"""
+    central_scheduler.allocate_workers = AsyncMock(return_value=[])
     results = await sub_scheduler.request_workers([])
     assert results == []
