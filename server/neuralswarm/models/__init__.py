@@ -1,6 +1,15 @@
 from neuralswarm.models.agent import Agent
 from neuralswarm.models.audit_log import AuditLog
-from neuralswarm.models.enums import AgentStatus, AgentType, LockMode, MemoryLevel, TaskStatus
+from neuralswarm.models.conflict import Conflict
+from neuralswarm.models.enums import (
+    AgentStatus,
+    AgentType,
+    ConflictAction,
+    ConflictStatus,
+    LockMode,
+    MemoryLevel,
+    TaskStatus,
+)
 from neuralswarm.models.llm import LLM
 from neuralswarm.models.lock import Lock
 from neuralswarm.models.memory import GlobalMemory, ProjectMemory
@@ -13,6 +22,9 @@ __all__ = [
     "AgentStatus",
     "AgentType",
     "AuditLog",
+    "Conflict",
+    "ConflictAction",
+    "ConflictStatus",
     "GlobalMemory",
     "LLM",
     "Lock",

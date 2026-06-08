@@ -34,3 +34,15 @@ class MemoryLevel(str, Enum):
     L1 = "L1"
     L2 = "L2"
     L3 = "L3"
+
+
+class ConflictStatus(str, Enum):
+    PENDING = "pending"
+    RESOLVED = "resolved"
+    TIMEOUT = "timeout"
+
+
+class ConflictAction(str, Enum):
+    RE_READ = "re_read"
+    OVERWRITE = "overwrite"
+    SUBMIT_TO_SCHEDULER = "submit_to_scheduler"
