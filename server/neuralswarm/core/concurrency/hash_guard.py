@@ -35,6 +35,24 @@ class HashGuard:
         self.worktree_path = worktree_path
         self.file_hashes: dict[str, str] = {}  # file_path -> sha256 hash
 
+    def _validate_path(self, file_path: str) -> str:
+        """验证并返回安全的绝对路径，防止路径穿越攻击。
+
+        Args:
+            file_path: 文件的相对路径。
+
+        Returns:
+            规范化后的绝对路径。
+
+        Raises:
+            ValueError: 检测到路径穿越。
+        """
+        full_path = os.path.normpath(os.path.join(self.worktree_path, file_path))
+        norm_worktree = os.path.normpath(self.worktree_path)
+        if not full_path.startswith(norm_worktree + os.sep) and full_path != norm_worktree:
+            raise ValueError(f"Path traversal detected: {file_path}")
+        return full_path
+
     async def read(self, file_path: str) -> str:
         """读取文件并记录哈希。
 
@@ -51,8 +69,9 @@ class HashGuard:
 
         Raises:
             FileNotFoundError: 文件不存在。
+            ValueError: 检测到路径穿越。
         """
-        full_path = os.path.join(self.worktree_path, file_path)
+        full_path = self._validate_path(file_path)
 
         async with aiofiles.open(full_path, "r", encoding="utf-8") as f:
             content = await f.read()
@@ -73,7 +92,7 @@ class HashGuard:
         3. 与记录的哈希比较
         4. 如果哈希不同 -> 返回 HashConflict
         5. 如果哈希相同 -> 写入文件 + git commit
-        6. 更新 file_hashes
+        6. 更新 file_hashes（即使 git commit 失败也会更新）
 
         Args:
             file_path: 文件的相对路径。
@@ -82,8 +101,11 @@ class HashGuard:
 
         Returns:
             True 表示写入成功，HashConflict 表示冲突。
+
+        Raises:
+            ValueError: 检测到路径穿越。
         """
-        full_path = os.path.join(self.worktree_path, file_path)
+        full_path = self._validate_path(file_path)
         recorded_hash = self.file_hashes.get(file_path)
 
         # 读取当前文件内容
@@ -118,10 +140,17 @@ class HashGuard:
         async with aiofiles.open(full_path, "w", encoding="utf-8") as f:
             await f.write(content)
 
-        # Git commit
-        await self._git_add_and_commit(file_path, agent_id)
+        # Git commit - failure should not leave hash state inconsistent
+        try:
+            await self._git_add_and_commit(file_path, agent_id)
+        except Exception:
+            logger.exception(
+                "Git commit failed for %s (agent=%s), hash still updated",
+                file_path,
+                agent_id,
+            )
 
-        # 更新哈希记录
+        # 更新哈希记录（无论 git commit 是否成功）
         new_hash = self.compute_hash(content)
         self.file_hashes[file_path] = new_hash
 

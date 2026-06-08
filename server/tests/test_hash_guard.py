@@ -276,6 +276,104 @@ def test_clear(guard):
     assert guard.get_hash("a.txt") is None
 
 
+# ── path traversal 测试 ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_read_path_traversal_rejected(guard):
+    """read 应拒绝包含 .. 的路径穿越攻击。"""
+    with pytest.raises(ValueError, match="Path traversal detected"):
+        await guard.read("../../etc/passwd")
+
+
+@pytest.mark.asyncio
+async def test_read_path_traversal_subdir_rejected(guard):
+    """read 应拒绝从子目录逃逸的路径。"""
+    with pytest.raises(ValueError, match="Path traversal detected"):
+        await guard.read("subdir/../../etc/passwd")
+
+
+@pytest.mark.asyncio
+@patch.object(HashGuard, "_git_add_and_commit", new_callable=AsyncMock)
+async def test_write_path_traversal_rejected(mock_git, guard, agent_id):
+    """write 应拒绝包含 .. 的路径穿越攻击。"""
+    with pytest.raises(ValueError, match="Path traversal detected"):
+        await guard.write("../../etc/passwd", "malicious", agent_id)
+
+
+@pytest.mark.asyncio
+@patch.object(HashGuard, "_git_add_and_commit", new_callable=AsyncMock)
+async def test_write_path_traversal_subdir_rejected(mock_git, guard, agent_id):
+    """write 应拒绝从子目录逃逸的路径。"""
+    with pytest.raises(ValueError, match="Path traversal detected"):
+        await guard.write("subdir/../../etc/passwd", "malicious", agent_id)
+
+
+@pytest.mark.asyncio
+@patch.object(HashGuard, "_git_add_and_commit", new_callable=AsyncMock)
+async def test_write_path_traversal_encoded_dot_rejected(mock_git, guard, agent_id):
+    """write 应拒绝尝试通过多级 .. 逃逸的路径。"""
+    with pytest.raises(ValueError, match="Path traversal detected"):
+        await guard.write("a/b/c/../../../../etc/passwd", "malicious", agent_id)
+
+
+# ── git commit failure 测试 ─────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_write_git_commit_failure_still_updates_hash(guard, worktree_path, agent_id):
+    """git commit 失败时，哈希记录仍应更新，避免下次误报冲突。"""
+    file_path = "fail_commit.txt"
+    full_path = os.path.join(worktree_path, file_path)
+
+    with open(full_path, "w", encoding="utf-8") as f:
+        f.write("initial")
+
+    await guard.read(file_path)
+
+    # Mock git commit to raise
+    with patch.object(
+        HashGuard, "_git_add_and_commit", new_callable=AsyncMock, side_effect=RuntimeError("git failed")
+    ):
+        result = await guard.write(file_path, "updated content", agent_id)
+
+    assert result is True
+
+    # 哈希应已更新，即使 git 失败
+    assert guard.get_hash(file_path) == HashGuard.compute_hash("updated content")
+
+    # 文件内容应正确写入
+    with open(full_path, "r", encoding="utf-8") as f:
+        assert f.read() == "updated content"
+
+
+@pytest.mark.asyncio
+async def test_write_after_git_failure_no_false_conflict(guard, worktree_path, agent_id):
+    """git commit 失败后，再次写入不应误报冲突。"""
+    file_path = "no_false_conflict.txt"
+    full_path = os.path.join(worktree_path, file_path)
+
+    with open(full_path, "w", encoding="utf-8") as f:
+        f.write("v1")
+
+    await guard.read(file_path)
+
+    # 第一次写入，git 失败
+    with patch.object(
+        HashGuard, "_git_add_and_commit", new_callable=AsyncMock, side_effect=RuntimeError("git failed")
+    ):
+        result1 = await guard.write(file_path, "v2", agent_id)
+
+    assert result1 is True
+
+    # 第二次写入，git 正常 - 不应产生冲突
+    with patch.object(HashGuard, "_git_add_and_commit", new_callable=AsyncMock):
+        result2 = await guard.write(file_path, "v3", agent_id)
+
+    assert result2 is True
+    assert guard.get_hash(file_path) == HashGuard.compute_hash("v3")
+
+
 # ── HashConflict 数据类测试 ──────────────────────────────────────────
 
 
