@@ -2,6 +2,7 @@ import { ref, computed, watch, onUnmounted, type Ref } from 'vue'
 
 export interface TaskEvent {
   type: 'status' | 'tool_call' | 'tool_result' | 'message' | 'error' | 'diff'
+    | 'plan_start' | 'plan_generated' | 'plan_completed'
   data: Record<string, any>
   timestamp: string
   event_id?: string
