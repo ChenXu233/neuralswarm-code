@@ -1,10 +1,5 @@
 <script setup lang="ts">
-interface Task {
-  id: string
-  prompt: string
-  status: string
-  created_at: string
-}
+import type { Task } from '../types/scheduler'
 
 defineProps<{
   tasks: Task[]
@@ -28,7 +23,7 @@ const statusColors: Record<string, string> = {
         <span class="task-id">{{ task.id.slice(0, 8) }}</span>
         <span class="task-status" :style="{ color: statusColors[task.status] || '#666' }">{{ task.status }}</span>
       </div>
-      <div class="task-prompt">{{ task.prompt }}</div>
+      <div class="task-prompt">{{ task.input }}</div>
     </div>
   </div>
 </template>

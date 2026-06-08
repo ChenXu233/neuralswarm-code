@@ -1,13 +1,5 @@
 <script setup lang="ts">
-interface Agent {
-  id: string
-  name: string
-  agent_type: 'scheduler' | 'worker'
-  status: 'idle' | 'planning' | 'running' | 'waiting' | 'completed' | 'failed'
-  task_id: string | null
-  parent_id: string | null
-  created_at: string
-}
+import type { Agent } from '../types/scheduler'
 
 defineProps<{
   agents: Agent[]

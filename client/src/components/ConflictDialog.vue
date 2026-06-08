@@ -1,16 +1,8 @@
 <script setup lang="ts">
-interface Conflict {
-  id: string
-  file_path: string
-  agent_id: string
-  other_agent_id: string
-  current_content: string
-  new_content: string
-  status: 'pending' | 'resolved' | 'timeout'
-}
+import type { Conflict } from '../types/scheduler'
 
 defineProps<{
-  conflict: Conflict
+  conflict: Conflict | null
 }>()
 
 const emit = defineEmits<{
@@ -19,7 +11,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="conflict-dialog">
+  <div v-if="conflict" class="conflict-dialog">
     <h3>File Conflict: {{ conflict.file_path }}</h3>
     <div class="conflict-info">
       <p>Agent {{ conflict.agent_id }} wants to modify a file that was changed by Agent {{ conflict.other_agent_id }}</p>
