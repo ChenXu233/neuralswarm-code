@@ -29,10 +29,6 @@ def upgrade() -> None:
     op.create_foreign_key('agents_task_id_fkey', 'agents', 'tasks', ['task_id'], ['id'])
     op.create_foreign_key('agents_parent_id_fkey', 'agents', 'agents', ['parent_id'], ['id'])
 
-    # Update existing agents to have agent_type='worker' (default)
-    # This is handled by the server_default, but we can also explicitly update if needed
-    # op.execute("UPDATE agents SET agent_type = 'worker' WHERE agent_type IS NULL")
-
 
 def downgrade() -> None:
     # Remove foreign key constraints
