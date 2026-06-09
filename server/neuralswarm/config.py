@@ -18,6 +18,18 @@ class Settings(BaseSettings):
     LLM_GATEWAY_URL: str = "http://localhost:3000"
     LLM_GATEWAY_TIMEOUT: int = 30
 
+    # Qdrant
+    QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_COLLECTION: str = "neuralswarm"
+
+    # MCP
+    MCP_WEBSOCKET_PORT: int = 8765
+    MCP_TIMEOUT: int = 30
+
+    # Memory
+    L1_TTL_HOURS: int = 24
+    L2_EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+
     model_config = {
         "env_file": "../.env",
         "env_file_encoding": "utf-8",

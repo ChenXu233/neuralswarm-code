@@ -104,6 +104,17 @@ services:
       - redis
     restart: unless-stopped
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    profiles: ["infra"]
+    ports:
+      - "${NS_QDRANT_PORT:-6333}:6333"
+      - "${NS_QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
+  qdrant_data:
