@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { MessageSquare, Folder, Puzzle, Settings } from 'lucide-vue-next'
+import { MessageSquare, Folder, Puzzle, Settings, Database } from 'lucide-vue-next'
 
 const props = defineProps<{
-  activePanel: 'chat' | 'files' | 'plugins' | 'settings' | null
+  activePanel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings' | null
 }>()
 
 const emit = defineEmits<{
-  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'settings' | null]
+  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings' | null]
 }>()
 
-function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
+function handleClick(panel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings') {
   // Toggle: if same panel is clicked, collapse; otherwise switch
   emit('update:activePanel', props.activePanel === panel ? null : panel)
 }
@@ -40,6 +40,13 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'settings') {
         @click="handleClick('plugins')"
       >
         <Puzzle />
+      </button>
+      <button
+        :class="['activity-btn', { active: activePanel === 'memory' }]"
+        title="Memory"
+        @click="handleClick('memory')"
+      >
+        <Database />
       </button>
     </div>
 

@@ -8,6 +8,7 @@ import DiffView from '../components/chat/DiffView.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import StatusDot from '../components/ui/StatusDot.vue'
 import AgentPanel from '../components/AgentPanel.vue'
+import EventStream from '../components/EventStream.vue'
 import { useWebSocket } from '../composables/useWebSocket'
 import { useTask } from '../composables/useTask'
 import { listAgents, type Agent, type Project } from '../api/client'
@@ -156,6 +157,7 @@ function toggleAgents() {
       <AgentPanel v-if="showAgents" :agents="agents" />
     </div>
 
+    <EventStream />
     <ChatInput :loading="loading" @submit="handleSubmit" />
   </MainContent>
 </template>

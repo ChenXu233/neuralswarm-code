@@ -141,3 +141,19 @@ export async function decideConflict(
   const data = await resp.json()
   return data.data
 }
+
+// ── Memory API ─────────────────────────────────────────────
+
+export async function getMemory(projectId: string, level: string, limit: number = 100): Promise<any> {
+  const response = await fetch(`${API_BASE}/api/memory/${projectId}?level=${level}&limit=${limit}`)
+  return response.json()
+}
+
+export async function writeMemory(projectId: string, level: string, content: string): Promise<any> {
+  const response = await fetch(`${API_BASE}/api/memory/${projectId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level, content })
+  })
+  return response.json()
+}

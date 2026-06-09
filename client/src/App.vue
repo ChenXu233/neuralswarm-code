@@ -7,6 +7,7 @@ import ChatPanel from './components/sidebar/ChatPanel.vue'
 import FilesPanel from './components/sidebar/FilesPanel.vue'
 import PluginsPanel from './components/sidebar/PluginsPanel.vue'
 import SettingsPanel from './components/sidebar/SettingsPanel.vue'
+import MemoryPanel from './components/sidebar/MemoryPanel.vue'
 import HomePage from './components/HomePage.vue'
 import TaskView from './views/TaskView.vue'
 import { useTask } from './composables/useTask'
@@ -16,7 +17,7 @@ useTheme()
 
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
-const activePanel = ref<'chat' | 'files' | 'plugins' | 'settings' | null>('chat')
+const activePanel = ref<'chat' | 'files' | 'plugins' | 'memory' | 'settings' | null>('chat')
 
 const { tasks, currentTask, loadTasks } = useTask()
 
@@ -51,7 +52,7 @@ loadProjects()
     <!-- Shared sidebar: visible when any panel is active, regardless of page -->
     <Sidebar
       v-if="activePanel && activePanel !== 'settings'"
-      :title="activePanel === 'chat' ? 'Chat' : activePanel === 'files' ? 'Files' : 'Plugins'"
+      :title="activePanel === 'chat' ? 'Chat' : activePanel === 'files' ? 'Files' : activePanel === 'plugins' ? 'Plugins' : 'Memory'"
     >
       <ChatPanel
         v-if="activePanel === 'chat'"
@@ -61,6 +62,7 @@ loadProjects()
       />
       <FilesPanel v-else-if="activePanel === 'files'" :has-open-project="!!selectedProject" />
       <PluginsPanel v-else-if="activePanel === 'plugins'" />
+      <MemoryPanel v-else-if="activePanel === 'memory'" :project-id="selectedProject?.id || ''" />
     </Sidebar>
 
     <SettingsPanel
