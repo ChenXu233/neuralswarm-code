@@ -1,23 +1,18 @@
 <script setup lang="ts">
 import StatusDot from '../ui/StatusDot.vue'
 import { useTheme } from '../../composables/useTheme'
+import { useServerConnection } from '../../composables/useServerConnection'
 import type { Theme } from '../../composables/useTheme'
-
-interface Server {
-  url: string
-  status: 'connected' | 'disconnected'
-}
-
-defineProps<{
-  servers: Server[]
-  activeServer?: string
-}>()
-
-defineEmits<{
-  select: [server: Server]
-}>()
+import { ref } from 'vue'
 
 const { theme, setTheme, fontSize, setFontSize } = useTheme()
+const { servers, activeServerId, addServer, connectServer, disconnectServer, removeServer } = useServerConnection()
+
+// 添加服务器表单
+const showAddForm = ref(false)
+const newName = ref('')
+const newUrl = ref('')
+const newToken = ref('')
 
 const themes: { value: Theme; label: string }[] = [
   { value: 'warm-stone', label: 'Warm Stone' },
@@ -32,6 +27,35 @@ const fontSizes = [
   { value: 'large' as const, label: 'L' },
   { value: 'xl' as const, label: 'XL' },
 ]
+
+async function handleAddServer() {
+  if (!newName.value || !newUrl.value) return
+  await addServer({
+    name: newName.value,
+    url: newUrl.value,
+    token: newToken.value || undefined
+  })
+  newName.value = ''
+  newUrl.value = ''
+  newToken.value = ''
+  showAddForm.value = false
+}
+
+async function handleConnect(serverId: string) {
+  await connectServer(serverId)
+}
+
+async function handleDisconnect(serverId: string) {
+  await disconnectServer(serverId)
+}
+
+function handleRemove(serverId: string) {
+  removeServer(serverId)
+}
+
+function selectServer(serverId: string) {
+  activeServerId.value = serverId
+}
 </script>
 
 <template>
@@ -46,15 +70,67 @@ const fontSizes = [
         <div class="section-label">SERVERS</div>
         <div
           v-for="server in servers"
-          :key="server.url"
-          :class="['setting-item', { active: server.url === activeServer }]"
-          @click="$emit('select', server)"
+          :key="server.id"
+          :class="['setting-item', { active: server.id === activeServerId }]"
         >
-          <StatusDot :status="server.status" />
-          <span class="item-label">{{ server.url }}</span>
-          <span class="item-hint">{{ server.status === 'connected' ? 'connected' : 'offline' }}</span>
+          <StatusDot :status="server.status === 'connected' ? 'connected' : 'disconnected'" />
+          <span class="item-label" @click="selectServer(server.id)">{{ server.name }}</span>
+          <span class="item-hint">{{ server.status }}</span>
+          <div class="server-actions">
+            <button
+              v-if="server.status === 'disconnected'"
+              class="action-btn connect"
+              @click="handleConnect(server.id)"
+            >
+              Connect
+            </button>
+            <button
+              v-else-if="server.status === 'connected'"
+              class="action-btn disconnect"
+              @click="handleDisconnect(server.id)"
+            >
+              Disconnect
+            </button>
+            <button
+              v-else
+              class="action-btn connecting"
+              disabled
+            >
+              Connecting...
+            </button>
+            <button
+              class="action-btn remove"
+              @click="handleRemove(server.id)"
+            >
+              Remove
+            </button>
+          </div>
         </div>
-        <button class="add-link">+ Add Server</button>
+
+        <!-- 添加服务器表单 -->
+        <div v-if="showAddForm" class="add-server-form">
+          <input
+            v-model="newName"
+            placeholder="Server name"
+            class="form-input"
+          />
+          <input
+            v-model="newUrl"
+            placeholder="http://localhost:8000"
+            class="form-input"
+          />
+          <input
+            v-model="newToken"
+            placeholder="Token (optional)"
+            type="password"
+            class="form-input"
+          />
+          <div class="form-actions">
+            <button class="btn-primary" @click="handleAddServer">Add</button>
+            <button class="btn-secondary" @click="showAddForm = false">Cancel</button>
+          </div>
+        </div>
+        <button v-else class="add-link" @click="showAddForm = true">+ Add Server</button>
       </div>
 
       <!-- Theme -->
@@ -232,5 +308,114 @@ const fontSizes = [
   border-color: var(--color-accent);
   color: var(--color-accent);
   background: var(--color-accent-soft);
+}
+
+.server-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.action-btn {
+  padding: 2px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+}
+
+.action-btn.connect {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.action-btn.disconnect {
+  border-color: var(--color-text-tertiary);
+  color: var(--color-text-tertiary);
+}
+
+.action-btn.remove {
+  border-color: var(--color-danger, #ef4444);
+  color: var(--color-danger, #ef4444);
+}
+
+.action-btn.remove:hover:not(:disabled) {
+  background: var(--color-danger-soft, #fef2f2);
+}
+
+.action-btn.connecting {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-server-form {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+  outline: none;
+  font-family: var(--font-mono);
+}
+
+.form-input:focus {
+  border-color: var(--color-accent);
+}
+
+.form-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 5px 0;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  color: var(--color-surface);
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 5px 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  transition: border-color var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-text-tertiary);
 }
 </style>

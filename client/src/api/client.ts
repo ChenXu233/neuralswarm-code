@@ -1,4 +1,16 @@
-const API_BASE = 'http://localhost:8000'
+import { computed } from 'vue'
+import { useServerConnection } from '@/composables/useServerConnection'
+
+const { activeServer } = useServerConnection()
+
+export const API_BASE = computed(() =>
+  activeServer.value?.url || 'http://localhost:8000'
+)
+
+// Helper function to get current API base URL
+function getApiBase(): string {
+  return activeServer.value?.url || 'http://localhost:8000'
+}
 
 export interface Project {
   id: string
@@ -22,7 +34,7 @@ export interface Task {
 }
 
 export async function createProject(name: string, path: string): Promise<Project> {
-  const resp = await fetch(`${API_BASE}/api/projects`, {
+  const resp = await fetch(`${getApiBase()}/api/projects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, path }),
@@ -33,13 +45,13 @@ export async function createProject(name: string, path: string): Promise<Project
 }
 
 export async function listProjects(): Promise<Project[]> {
-  const resp = await fetch(`${API_BASE}/api/projects`)
+  const resp = await fetch(`${getApiBase()}/api/projects`)
   const data = await resp.json()
   return data.items
 }
 
 export async function createTask(projectId: string, prompt: string): Promise<Task> {
-  const resp = await fetch(`${API_BASE}/api/tasks`, {
+  const resp = await fetch(`${getApiBase()}/api/tasks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ project_id: projectId, prompt }),
@@ -50,22 +62,22 @@ export async function createTask(projectId: string, prompt: string): Promise<Tas
 }
 
 export async function getTask(taskId: string): Promise<Task> {
-  const resp = await fetch(`${API_BASE}/api/tasks/${taskId}`)
+  const resp = await fetch(`${getApiBase()}/api/tasks/${taskId}`)
   const data = await resp.json()
   return data.data
 }
 
 export async function listTasks(projectId?: string): Promise<Task[]> {
   const url = projectId
-    ? `${API_BASE}/api/tasks?project_id=${projectId}`
-    : `${API_BASE}/api/tasks`
+    ? `${getApiBase()}/api/tasks?project_id=${projectId}`
+    : `${getApiBase()}/api/tasks`
   const resp = await fetch(url)
   const data = await resp.json()
   return data.items
 }
 
 export async function cancelTask(taskId: string): Promise<Task> {
-  const resp = await fetch(`${API_BASE}/api/tasks/${taskId}`, { method: 'DELETE' })
+  const resp = await fetch(`${getApiBase()}/api/tasks/${taskId}`, { method: 'DELETE' })
   const data = await resp.json()
   return data.data
 }
@@ -91,7 +103,7 @@ export async function listAgents(params?: {
   status?: string
   agent_type?: string
 }): Promise<{ items: Agent[]; total: number }> {
-  const url = new URL(`${API_BASE}/api/agents`)
+  const url = new URL(`${getApiBase()}/api/agents`)
   if (params?.project_id) url.searchParams.set('project_id', params.project_id)
   if (params?.status) url.searchParams.set('status', params.status)
   if (params?.agent_type) url.searchParams.set('agent_type', params.agent_type)
@@ -100,7 +112,7 @@ export async function listAgents(params?: {
 }
 
 export async function getAgent(agentId: string): Promise<Agent> {
-  const resp = await fetch(`${API_BASE}/api/agents/${agentId}`)
+  const resp = await fetch(`${getApiBase()}/api/agents/${agentId}`)
   const data = await resp.json()
   return data.data
 }
@@ -124,7 +136,7 @@ export interface Conflict {
 }
 
 export async function getConflict(conflictId: string): Promise<Conflict> {
-  const resp = await fetch(`${API_BASE}/api/conflicts/${conflictId}`)
+  const resp = await fetch(`${getApiBase()}/api/conflicts/${conflictId}`)
   const data = await resp.json()
   return data.data
 }
@@ -133,7 +145,7 @@ export async function decideConflict(
   conflictId: string,
   action: 're_read' | 'overwrite' | 'submit_to_scheduler'
 ): Promise<Conflict> {
-  const resp = await fetch(`${API_BASE}/api/conflicts/${conflictId}/decide`, {
+  const resp = await fetch(`${getApiBase()}/api/conflicts/${conflictId}/decide`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action }),
@@ -145,12 +157,12 @@ export async function decideConflict(
 // ── Memory API ─────────────────────────────────────────────
 
 export async function getMemory(projectId: string, level: string, limit: number = 100): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/memory/${projectId}?level=${level}&limit=${limit}`)
+  const response = await fetch(`${getApiBase()}/api/memory/${projectId}?level=${level}&limit=${limit}`)
   return response.json()
 }
 
 export async function writeMemory(projectId: string, level: string, content: string): Promise<any> {
-  const response = await fetch(`${API_BASE}/api/memory/${projectId}`, {
+  const response = await fetch(`${getApiBase()}/api/memory/${projectId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ level, content })
