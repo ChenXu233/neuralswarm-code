@@ -1,0 +1,14 @@
+{
+  "identifier": "default",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "fs:default",
+    "fs:read-all",
+    "fs:write-all",
+    "shell:default",
+    "shell:allow-execute",
+    "shell:allow-open"
+  ]
+}
