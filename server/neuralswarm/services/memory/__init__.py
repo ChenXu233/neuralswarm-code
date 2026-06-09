@@ -1,5 +1,6 @@
 """认知层 - L0-L3 记忆系统"""
 
 from .l0_memory import L0Memory
+from .l1_memory import L1Memory
 
-__all__ = ["L0Memory"]
+__all__ = ["L0Memory", "L1Memory"]
