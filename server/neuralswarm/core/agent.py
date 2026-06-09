@@ -7,6 +7,10 @@ from neuralswarm.core.tool_executor import ToolExecutor
 from neuralswarm.models.enums import AgentStatus
 from neuralswarm.services.llm.gateway import LLMGateway
 from neuralswarm.services.llm.types import LLMError
+from neuralswarm.services.memory.l0_memory import l0_memory
+from neuralswarm.services.memory.l1_memory import l1_memory
+from neuralswarm.services.memory.l3_memory import l3_memory
+from neuralswarm.services.event_bus import event_bus
 
 
 class Agent:
@@ -43,9 +47,23 @@ class Agent:
         await self.agent_repo.update_status(self.agent_id, AgentStatus.RUNNING)
 
         try:
+            # 记录任务开始事件到 L1 记忆
+            await l1_memory.record_event(
+                str(self.project_id),
+                "task_start",
+                f"Agent {self.agent_id} 开始执行任务: {task[:100]}..."
+            )
+
+            # 发布事件到事件总线
+            await event_bus.publish("agent.task_start", {
+                "agent_id": str(self.agent_id),
+                "project_id": str(self.project_id),
+                "task": task[:100],
+            })
+
             self.context_manager.add_message("user", task)
 
-            for _ in range(max_iterations):
+            for iteration in range(max_iterations):
                 messages = self.context_manager.get_messages()
 
                 # Get tool schemas
@@ -91,6 +109,13 @@ class Agent:
                                 "args": call.arguments,
                             })
 
+                        # 记录工具调用到 L1 记忆
+                        await l1_memory.record_event(
+                            str(self.project_id),
+                            "tool_call",
+                            f"调用工具: {call.name}"
+                        )
+
                         result = await self.tool_executor.execute(call.name, call.arguments)
                         self.context_manager.add_tool_result(call.id, result)
 
@@ -112,6 +137,28 @@ class Agent:
                         {"messages": self.context_manager.get_messages()},
                     )
                     await self.agent_repo.update_status(self.agent_id, AgentStatus.IDLE)
+
+                    # 记录任务完成事件到 L1 记忆
+                    await l1_memory.record_event(
+                        str(self.project_id),
+                        "task_complete",
+                        f"Agent {self.agent_id} 完成任务"
+                    )
+
+                    # 发布事件到事件总线
+                    await event_bus.publish("agent.task_complete", {
+                        "agent_id": str(self.agent_id),
+                        "project_id": str(self.project_id),
+                    })
+
+                    # 存储最终结果到 L3 记忆（长期记忆）
+                    # L3 记忆主要用于用户偏好，这里记录到 L1 事件
+                    await l1_memory.record_event(
+                        str(self.project_id),
+                        "task_result_stored",
+                        f"任务结果已存储: {response.content[:100]}..."
+                    )
+
                     return response.content
 
             await self.agent_repo.update_status(self.agent_id, AgentStatus.IDLE)
@@ -119,7 +166,19 @@ class Agent:
 
         except LLMError as e:
             await self.agent_repo.update_status(self.agent_id, AgentStatus.IDLE)
+            # 记录错误事件到 L1 记忆
+            await l1_memory.record_event(
+                str(self.project_id),
+                "task_error",
+                f"Agent {self.agent_id} 执行失败: {str(e)}"
+            )
             return f"Error: {e}"
         except Exception as e:
             await self.agent_repo.update_status(self.agent_id, AgentStatus.IDLE)
+            # 记录错误事件到 L1 记忆
+            await l1_memory.record_event(
+                str(self.project_id),
+                "task_error",
+                f"Agent {self.agent_id} 执行失败: {str(e)}"
+            )
             return f"Error: {e}"
