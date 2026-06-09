@@ -2,26 +2,18 @@
 import { ref, computed } from 'vue'
 import { ChevronRight, ChevronDown } from 'lucide-vue-next'
 
-const MCP_TOOLS = [
-  'mcp_file_read',
-  'mcp_file_write',
-  'mcp_shell_execute',
-  'mcp_git_log',
-  'mcp_git_diff'
-]
-
 const props = defineProps<{
-  tool: string
-  args: any
-  output?: string
-  status?: 'pending' | 'running' | 'completed' | 'failed'
+  toolName: string
+  params: Record<string, any>
+  result?: string
+  error?: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
 }>()
 
-const expanded = ref(false)
-const isMcpTool = computed(() => MCP_TOOLS.includes(props.tool))
+const isExpanded = ref(false)
 
 function toggle() {
-  expanded.value = !expanded.value
+  isExpanded.value = !isExpanded.value
 }
 
 function formatJson(obj: any): string {
@@ -32,6 +24,16 @@ function formatJson(obj: any): string {
   }
 }
 
+const statusText = computed(() => {
+  switch (props.status) {
+    case 'pending': return '等待中'
+    case 'running': return '执行中'
+    case 'completed': return '完成'
+    case 'failed': return '失败'
+    default: return props.status
+  }
+})
+
 const toolDisplayName = computed(() => {
   const names: Record<string, string> = {
     'mcp_file_read': '读取文件',
@@ -40,55 +42,46 @@ const toolDisplayName = computed(() => {
     'mcp_git_log': 'Git 日志',
     'mcp_git_diff': 'Git diff'
   }
-  return names[props.tool] || props.tool
-})
-
-const statusText = computed(() => {
-  switch (props.status) {
-    case 'pending': return '等待中'
-    case 'running': return '执行中'
-    case 'completed': return '完成'
-    case 'failed': return '失败'
-    default: return props.output ? '完成' : '...'
-  }
+  return names[props.toolName] || props.toolName
 })
 </script>
 
 <template>
-  <div :class="['tool-call', { expanded, 'mcp-tool': isMcpTool }]">
+  <div :class="['mcp-tool-call', { expanded: isExpanded }]">
     <!-- Collapsed header -->
     <div class="tool-header" @click="toggle">
-      <ChevronRight v-if="!expanded" class="chevron" />
+      <ChevronRight v-if="!isExpanded" class="chevron" />
       <ChevronDown v-else class="chevron" />
-      <span class="tool-bullet" :class="{ 'mcp-bullet': isMcpTool }">
-        <template v-if="isMcpTool">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-        </template>
-        <template v-else>◆</template>
-      </span>
-      <span class="tool-name" :class="{ 'mcp-name': isMcpTool }">{{ isMcpTool ? toolDisplayName : tool }}</span>
-      <span v-if="status" :class="['tool-status', status]">{{ statusText }}</span>
-      <span v-else-if="output" class="tool-stat done">done</span>
-      <span v-else class="tool-stat pending">...</span>
+      <div class="tool-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span class="tool-name">{{ toolDisplayName }}</span>
+      <span :class="['tool-status', status]">{{ statusText }}</span>
     </div>
 
     <!-- Expanded body -->
     <Transition name="expand">
-      <div v-if="expanded" class="tool-body">
+      <div v-if="isExpanded" class="tool-body">
         <!-- Parameters -->
         <div class="tool-section">
-          <div class="tool-section-label">PARAMETERS</div>
-          <pre class="tool-code">{{ formatJson(args) }}</pre>
+          <div class="tool-section-label">参数</div>
+          <pre class="tool-code">{{ formatJson(params) }}</pre>
         </div>
 
         <!-- Result -->
-        <div v-if="output" class="tool-section result-section">
-          <div class="tool-section-label">RESULT</div>
-          <pre class="tool-code">{{ output }}</pre>
+        <div v-if="result" class="tool-section result-section">
+          <div class="tool-section-label">结果</div>
+          <pre class="tool-code">{{ result }}</pre>
+        </div>
+
+        <!-- Error -->
+        <div v-if="error" class="tool-section error-section">
+          <div class="tool-section-label">错误</div>
+          <pre class="tool-code error-code">{{ error }}</pre>
         </div>
       </div>
     </Transition>
@@ -96,23 +89,16 @@ const statusText = computed(() => {
 </template>
 
 <style scoped>
-.tool-call {
+.mcp-tool-call {
   margin-bottom: 12px;
   border-left: 2px solid var(--color-border);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   transition: border-color var(--transition-fast);
   animation: message-in var(--transition-normal) var(--ease-out);
+  background: var(--color-surface);
 }
 
-.tool-call.expanded {
-  border-left-color: var(--color-accent);
-}
-
-.tool-call.mcp-tool {
-  border-left-color: #1976d2;
-}
-
-.tool-call.mcp-tool.expanded {
+.mcp-tool-call.expanded {
   border-left-color: #1976d2;
 }
 
@@ -120,8 +106,8 @@ const statusText = computed(() => {
 .tool-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 8px;
+  padding: 8px 12px;
   cursor: pointer;
   user-select: none;
   transition: background-color var(--transition-fast);
@@ -136,47 +122,23 @@ const statusText = computed(() => {
   color: var(--color-text-tertiary);
 }
 
-.tool-bullet {
-  color: var(--color-accent);
-  font-size: 8px;
-  flex-shrink: 0;
+.tool-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.tool-bullet.mcp-bullet {
-  color: #1976d2;
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   background: #e3f2fd;
-  border-radius: 3px;
+  color: #1976d2;
+  flex-shrink: 0;
 }
 
 .tool-name {
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
-  color: var(--color-accent);
-  flex: 1;
-}
-
-.tool-name.mcp-name {
   color: #1976d2;
-}
-
-.tool-stat {
-  font-size: var(--text-xs);
-  padding: 1px 6px;
-  border-radius: var(--radius-sm);
-}
-
-.tool-stat.done {
-  color: var(--color-success);
-  background: color-mix(in srgb, var(--color-success) 10%, transparent);
-}
-
-.tool-stat.pending {
-  color: var(--color-text-tertiary);
+  flex: 1;
 }
 
 .tool-status {
@@ -220,6 +182,10 @@ const statusText = computed(() => {
   background: var(--color-surface-hover);
 }
 
+.tool-section.error-section {
+  background: color-mix(in srgb, var(--color-error) 5%, transparent);
+}
+
 .tool-section-label {
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
@@ -235,5 +201,22 @@ const statusText = computed(() => {
   white-space: pre-wrap;
   word-break: break-all;
   line-height: 1.6;
+}
+
+.tool-code.error-code {
+  color: var(--color-error);
+}
+
+/* Transition */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all var(--transition-normal);
+  max-height: 500px;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
 }
 </style>

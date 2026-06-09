@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import MainContent from '../components/layout/MainContent.vue'
 import ChatMessage from '../components/ChatMessage.vue'
 import ToolCall from '../components/ToolCall.vue'
+import McpToolCall from '../components/McpToolCall.vue'
 import DiffView from '../components/chat/DiffView.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import StatusDot from '../components/ui/StatusDot.vue'
@@ -44,6 +45,14 @@ interface MessageEvent {
   data: any
 }
 
+const MCP_TOOLS = [
+  'mcp_file_read',
+  'mcp_file_write',
+  'mcp_shell_execute',
+  'mcp_git_log',
+  'mcp_git_diff'
+]
+
 const messages = computed(() => {
   const result: MessageEvent[] = []
   for (const event of events.value) {
@@ -68,6 +77,10 @@ const messages = computed(() => {
   }
   return result
 })
+
+function isMcpTool(toolName: string): boolean {
+  return MCP_TOOLS.includes(toolName)
+}
 
 const taskStatus = computed(() => {
   const statusEvent = [...events.value].reverse().find(e => e.type === 'status')
@@ -118,6 +131,14 @@ function toggleAgents() {
             v-if="msg.type === 'message'"
             role="assistant"
             :content="msg.data.content"
+          />
+          <McpToolCall
+            v-else-if="msg.type === 'tool_call' && isMcpTool(msg.data.tool)"
+            :tool-name="msg.data.tool"
+            :params="msg.data.args"
+            :result="msg.data.output"
+            :error="msg.data.error"
+            :status="msg.data.status || (msg.data.output ? 'completed' : 'running')"
           />
           <ToolCall
             v-else-if="msg.type === 'tool_call'"
