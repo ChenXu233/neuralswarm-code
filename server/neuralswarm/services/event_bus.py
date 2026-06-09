@@ -1,8 +1,11 @@
 """事件总线 - 发布/订阅模式的事件系统"""
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Awaitable
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -18,8 +21,6 @@ class EventBus:
 
     def __init__(self):
         self._subscriptions: dict[str, list[Subscription]] = {}
-        self._running = False
-        self._task: asyncio.Task | None = None
 
     async def publish(self, event_type: str, data: dict[str, Any]) -> None:
         """发布事件"""
@@ -29,7 +30,7 @@ class EventBus:
                 try:
                     await sub.handler(data)
                 except Exception as e:
-                    print(f"Event handler error: {e}")
+                    logger.warning("Event handler error: %s", e)
 
     async def subscribe(
         self,
