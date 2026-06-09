@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { isTauri } from '@/utils/platform'
+import PlatformBanner from '@/components/ui/PlatformBanner.vue'
 
 const props = defineProps<{
   toolName: string
@@ -44,10 +46,24 @@ const toolDisplayName = computed(() => {
   }
   return names[props.toolName] || props.toolName
 })
+
+const needsTauri = computed(() => {
+  const tauriTools = ['mcp_file_read', 'mcp_file_write', 'mcp_shell_execute', 'mcp_git_log', 'mcp_git_diff']
+  return tauriTools.includes(props.toolName)
+})
 </script>
 
 <template>
   <div :class="['mcp-tool-call', { expanded: isExpanded }]">
+    <!-- Platform warning banner -->
+    <PlatformBanner
+      v-if="!isTauri() && needsTauri"
+      type="warning"
+      title="本地操作不可用"
+      message="此工具需要桌面应用支持。请在 Tauri 应用中使用。"
+      :dismissible="true"
+    />
+
     <!-- Collapsed header -->
     <div class="tool-header" @click="toggle">
       <ChevronRight v-if="!isExpanded" class="chevron" />
