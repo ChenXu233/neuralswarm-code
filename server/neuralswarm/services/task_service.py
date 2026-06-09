@@ -26,6 +26,21 @@ class TaskService:
         self.db = db
         self.llm_gateway = llm_gateway
 
+    async def _get_mcp_client(self, project_id: str):
+        """获取项目的 MCP 客户端"""
+        from neuralswarm.services.mcp.router import mcp_router
+        from neuralswarm.services.mcp.client import McpClient
+
+        client_id = mcp_router.get_client_for_project(project_id)
+        if not client_id:
+            return None
+
+        # 简化实现：返回新的客户端连接
+        client = McpClient(f"ws://localhost:8765")
+        if await client.connect():
+            return client
+        return None
+
     async def submit_task(self, project_id: UUID, prompt: str) -> Task:
         """Submit a task and start agent execution in background."""
         project = await self.db.get(Project, project_id)
