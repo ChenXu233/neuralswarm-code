@@ -17,6 +17,10 @@ export function useServerConnection() {
   )
 
   const hasConfiguredServers = computed(() => {
+    return servers.value.length > 0
+  })
+
+  const hasConnectedServers = computed(() => {
     return servers.value.length > 0 && servers.value.some(s => s.status === 'connected')
   })
 
@@ -117,6 +121,7 @@ export function useServerConnection() {
     activeServer,
     activeServerId,
     hasConfiguredServers,
+    hasConnectedServers,
     addServer,
     connectServer,
     disconnectServer,
