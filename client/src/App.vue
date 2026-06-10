@@ -43,11 +43,6 @@ function handleServerConnected() {
   loadProjects()
 }
 
-// 处理跳过设置
-function handleSkipSetup() {
-  showServerSetup.value = false
-}
-
 function handleSelectTask(task: Task) {
   currentTask.value = task
 }
@@ -85,7 +80,6 @@ loadProjects()
     <ServerSetupDialog
       v-if="showServerSetup"
       @connected="handleServerConnected"
-      @close="handleSkipSetup"
     />
 
     <ActivityBar

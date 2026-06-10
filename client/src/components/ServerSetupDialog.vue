@@ -3,38 +3,17 @@ import { ref } from 'vue'
 import { useServerConnection } from '../composables/useServerConnection'
 
 const emit = defineEmits<{
-  (e: 'close'): void
   (e: 'connected'): void
 }>()
 
-const { addServer, connectServer, autoDetectLocalServer } = useServerConnection()
+const { addServer, connectServer } = useServerConnection()
 
 const url = ref('http://localhost:8000')
 const token = ref('')
 const name = ref('')
 const error = ref('')
 const loading = ref(false)
-const autoDetectLoading = ref(false)
 const step = ref<'form' | 'connecting' | 'success'>('form')
-
-async function handleAutoDetect() {
-  autoDetectLoading.value = true
-  error.value = ''
-
-  try {
-    const detectedUrl = await autoDetectLocalServer()
-    if (detectedUrl) {
-      url.value = detectedUrl
-      error.value = ''
-    } else {
-      error.value = '未检测到本地服务器，请手动输入'
-    }
-  } catch {
-    error.value = '检测过程发生错误'
-  } finally {
-    autoDetectLoading.value = false
-  }
-}
 
 async function handleConnect() {
   if (!url.value) {
@@ -63,7 +42,6 @@ async function handleConnect() {
       step.value = 'success'
       setTimeout(() => {
         emit('connected')
-        emit('close')
       }, 1000)
     } else {
       error.value = '连接失败，请检查服务器地址和Token'
@@ -76,10 +54,6 @@ async function handleConnect() {
     loading.value = false
   }
 }
-
-function handleSkip() {
-  emit('close')
-}
 </script>
 
 <template>
@@ -91,24 +65,6 @@ function handleSkip() {
       </div>
 
       <div class="dialog-content">
-        <!-- 自动检测 -->
-        <div class="auto-detect-section">
-          <button
-            class="btn btn-secondary"
-            @click="handleAutoDetect"
-            :disabled="autoDetectLoading || loading"
-          >
-            <span v-if="autoDetectLoading" class="loading-spinner"></span>
-            自动检测本地服务器
-          </button>
-          <p class="hint">尝试自动检测运行在 localhost:8000 的服务器</p>
-        </div>
-
-        <div class="divider">
-          <span>或</span>
-        </div>
-
-        <!-- 手动输入表单 -->
         <form @submit.prevent="handleConnect" class="manual-form">
           <div class="form-group">
             <label for="url">服务器地址 *</label>
@@ -158,18 +114,6 @@ function handleSkip() {
             </button>
           </div>
         </form>
-
-        <!-- 跳过选项 -->
-        <div class="skip-section">
-          <button
-            class="btn btn-text"
-            @click="handleSkip"
-            :disabled="loading"
-          >
-            跳过，使用默认配置
-          </button>
-          <p class="warning">跳过可能无法使用完整功能</p>
-        </div>
       </div>
 
       <!-- 成功状态 -->
@@ -229,32 +173,6 @@ function handleSkip() {
   gap: var(--space-5);
 }
 
-.auto-detect-section {
-  text-align: center;
-}
-
-.auto-detect-section .hint {
-  margin: var(--space-2) 0 0 0;
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--color-border);
-}
-
 .manual-form {
   display: flex;
   flex-direction: column;
@@ -306,18 +224,6 @@ function handleSkip() {
   justify-content: flex-end;
 }
 
-.skip-section {
-  text-align: center;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
-}
-
-.skip-section .warning {
-  margin: var(--space-2) 0 0 0;
-  font-size: var(--text-xs);
-  color: var(--color-warning);
-}
-
 .btn {
   padding: var(--space-2) var(--space-5);
   border: none;
@@ -340,26 +246,6 @@ function handleSkip() {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
-}
-
-.btn-secondary {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--color-surface);
-}
-
-.btn-text {
-  background: none;
-  color: var(--color-text-secondary);
-  padding: var(--space-2) var(--space-4);
-}
-
-.btn-text:hover:not(:disabled) {
-  color: var(--color-text);
 }
 
 .loading-spinner {
