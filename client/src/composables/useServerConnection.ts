@@ -98,21 +98,6 @@ export function useServerConnection() {
     }
   }
 
-  async function autoDetectLocalServer() {
-    const localUrl = 'http://localhost:8000'
-    try {
-      const response = await fetch(`${localUrl}/health`, {
-        signal: AbortSignal.timeout(5000)
-      })
-      if (response.ok) {
-        return localUrl
-      }
-    } catch (error) {
-      console.log('Local server not detected:', error)
-    }
-    return null
-  }
-
   // 初始化时加载
   loadServers()
 
@@ -125,7 +110,6 @@ export function useServerConnection() {
     addServer,
     connectServer,
     disconnectServer,
-    removeServer,
-    autoDetectLocalServer
+    removeServer
   }
 }
