@@ -14,21 +14,26 @@ const token = ref('')
 const name = ref('')
 const error = ref('')
 const loading = ref(false)
+const autoDetectLoading = ref(false)
 const step = ref<'form' | 'connecting' | 'success'>('form')
 
 async function handleAutoDetect() {
-  loading.value = true
+  autoDetectLoading.value = true
   error.value = ''
 
-  const detectedUrl = await autoDetectLocalServer()
-  if (detectedUrl) {
-    url.value = detectedUrl
-    error.value = ''
-  } else {
-    error.value = '未检测到本地服务器，请手动输入'
+  try {
+    const detectedUrl = await autoDetectLocalServer()
+    if (detectedUrl) {
+      url.value = detectedUrl
+      error.value = ''
+    } else {
+      error.value = '未检测到本地服务器，请手动输入'
+    }
+  } catch {
+    error.value = '检测过程发生错误'
+  } finally {
+    autoDetectLoading.value = false
   }
-
-  loading.value = false
 }
 
 async function handleConnect() {
@@ -91,9 +96,9 @@ function handleSkip() {
           <button
             class="btn btn-secondary"
             @click="handleAutoDetect"
-            :disabled="loading"
+            :disabled="autoDetectLoading || loading"
           >
-            <span v-if="loading" class="loading-spinner"></span>
+            <span v-if="autoDetectLoading" class="loading-spinner"></span>
             自动检测本地服务器
           </button>
           <p class="hint">尝试自动检测运行在 localhost:8000 的服务器</p>
@@ -378,7 +383,8 @@ function handleSkip() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--color-surface);
+  opacity: 0.95;
   display: flex;
   flex-direction: column;
   align-items: center;
