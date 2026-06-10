@@ -13,6 +13,8 @@ import TaskView from './views/TaskView.vue'
 import { useTask } from './composables/useTask'
 import { listProjects, type Project, type Task } from './api/client'
 import { useI18n } from 'vue-i18n'
+import ServerSetupDialog from './components/ServerSetupDialog.vue'
+import { useServerConnection } from './composables/useServerConnection'
 
 useI18n()
 useTheme()
@@ -23,6 +25,28 @@ const activePanel = ref<'chat' | 'files' | 'plugins' | 'memory' | null>('chat')
 const showSettings = ref(false)
 
 const { tasks, currentTask, loadTasks } = useTask()
+
+const { hasConfiguredServers } = useServerConnection()
+const showServerSetup = ref(false)
+
+// 检查是否需要显示服务器设置对话框
+function checkServerSetup() {
+  if (!hasConfiguredServers.value) {
+    showServerSetup.value = true
+  }
+}
+
+// 处理服务器连接成功
+function handleServerConnected() {
+  showServerSetup.value = false
+  // 重新加载项目列表
+  loadProjects()
+}
+
+// 处理跳过设置
+function handleSkipSetup() {
+  showServerSetup.value = false
+}
 
 function handleSelectTask(task: Task) {
   currentTask.value = task
@@ -49,11 +73,21 @@ function handleToggleSettings() {
   showSettings.value = !showSettings.value
 }
 
+// 在组件挂载时检查
+checkServerSetup()
+
 loadProjects()
 </script>
 
 <template>
   <div id="app" class="app-layout">
+    <!-- 服务器设置对话框 -->
+    <ServerSetupDialog
+      v-if="showServerSetup"
+      @connected="handleServerConnected"
+      @close="handleSkipSetup"
+    />
+
     <ActivityBar
       v-model:active-panel="activePanel"
       :show-settings="showSettings"
