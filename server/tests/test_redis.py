@@ -1,3 +1,4 @@
+import os
 import pytest
 import pytest_asyncio
 
@@ -6,7 +7,9 @@ from neuralswarm.services.redis import RedisClient
 
 @pytest_asyncio.fixture
 async def redis_client():
-    client = RedisClient(url="redis://localhost:6379/15")
+    # 使用环境变量或默认 Docker Redis 端口
+    redis_url = os.environ.get("NS_REDIS_URL", "redis://localhost:6380/15")
+    client = RedisClient(url=redis_url)
     await client.connect()
     yield client
     await client.pool.flushdb()

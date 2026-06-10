@@ -12,7 +12,8 @@ class RedisClient:
         self._pool: redis.Redis | None = None
 
     async def connect(self):
-        self._pool = redis.from_url(self._url, decode_responses=True)
+        # 使用 RESP2 协议以兼容旧版 Redis (3.x)
+        self._pool = redis.from_url(self._url, decode_responses=True, protocol=2)
 
     async def close(self):
         if self._pool:

@@ -17,8 +17,9 @@ from neuralswarm.services.llm.types import (
 class LLMGateway:
     """LLM 网关适配器主类。"""
 
-    def __init__(self, base_url: str, timeout: int = 30):
+    def __init__(self, base_url: str, api_key: str = "", timeout: int = 30):
         self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
         self.timeout = timeout
         self._adapters: dict[str, BaseAdapter] = {
             "openai": OpenAIAdapter(),
@@ -56,10 +57,15 @@ class LLMGateway:
         )
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
+            headers = {}
+            if self.api_key:
+                headers["Authorization"] = f"Bearer {self.api_key}"
+
             try:
                 response = await client.post(
                     f"{self.base_url}{endpoint}",
                     json=body,
+                    headers=headers,
                 )
             except httpx.TimeoutException:
                 raise LLMTimeoutError()

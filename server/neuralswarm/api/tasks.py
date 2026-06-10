@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
 def _get_task_service(db: AsyncSession) -> TaskService:
-    gateway = LLMGateway(base_url=settings.LLM_GATEWAY_URL, timeout=settings.LLM_GATEWAY_TIMEOUT)
+    gateway = LLMGateway(base_url=settings.LLM_GATEWAY_URL, api_key=settings.LLM_GATEWAY_API_KEY, timeout=settings.LLM_GATEWAY_TIMEOUT)
     return TaskService(db=db, llm_gateway=gateway)
 
 
