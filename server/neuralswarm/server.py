@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -16,13 +17,60 @@ from neuralswarm.api.ws_conflicts import router as ws_conflicts_router
 from neuralswarm.config import settings
 from neuralswarm.services.redis import redis_client
 
+logger = logging.getLogger(__name__)
+
+
+def run_migrations():
+    """运行 Alembic 数据库迁移（自动升级到最新版本）"""
+    import os
+    from pathlib import Path
+
+    from alembic import command
+    from alembic.config import Config
+
+    # 获取 alembic.ini 路径
+    server_dir = Path(__file__).parent.parent
+    alembic_cfg_path = server_dir / "alembic.ini"
+
+    if not alembic_cfg_path.exists():
+        logger.warning("alembic.ini not found at %s, skipping migrations", alembic_cfg_path)
+        return
+
+    alembic_cfg = Config(str(alembic_cfg_path))
+
+    # 设置数据库 URL
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
+    # 切换到 server 目录（Alembic 需要相对路径）
+    original_dir = os.getcwd()
+    os.chdir(str(server_dir))
+
+    try:
+        logger.info("Running Alembic migrations (upgrade to head)...")
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Migrations completed successfully")
+    except Exception as e:
+        logger.error("Migration failed: %s", e)
+        raise
+    finally:
+        os.chdir(original_dir)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期：启动时连接 Redis，关闭时断开。"""
+    """应用生命周期：启动时运行迁移并连接 Redis，关闭时断开。"""
+    # 运行数据库迁移
+    run_migrations()
+
+    # 连接 Redis
     await redis_client.connect()
+    logger.info("Application started")
+
     yield
+
+    # 关闭连接
     await redis_client.close()
+    logger.info("Application stopped")
 
 
 def create_app() -> FastAPI:
