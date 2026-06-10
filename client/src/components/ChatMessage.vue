@@ -35,8 +35,8 @@ function toggleThinking() {
       >
         <ChevronRight v-if="!thinkingExpanded" class="chevron" />
         <ChevronDown v-else class="chevron" />
-        <span class="thinking-label">Thinking</span>
-        <span v-if="thinkingDone" class="thinking-duration">· done</span>
+        <span class="thinking-label">{{ $t('thinking.label') }}</span>
+        <span v-if="thinkingDone" class="thinking-duration">· {{ $t('common.done') }}</span>
         <span v-else class="thinking-duration">· ...</span>
       </div>
       <Transition name="expand">

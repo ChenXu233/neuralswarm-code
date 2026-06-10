@@ -1,31 +1,44 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { X, Server, Palette, Globe, Monitor } from 'lucide-vue-next'
 import StatusDot from '../ui/StatusDot.vue'
 import { useTheme } from '../../composables/useTheme'
 import { useServerConnection } from '../../composables/useServerConnection'
+import { useLocale } from '../../composables/useLocale'
 import type { Theme } from '../../composables/useTheme'
-import { ref } from 'vue'
+
+const emit = defineEmits<{ close: [] }>()
 
 const { theme, setTheme, fontSize, setFontSize } = useTheme()
 const { servers, activeServerId, addServer, connectServer, disconnectServer, removeServer } = useServerConnection()
+const { currentLocale, supportedLocales, setLocale } = useLocale()
 
-// 添加服务器表单
+type Section = 'servers' | 'appearance' | 'language'
+const activeSection = ref<Section>('servers')
+
 const showAddForm = ref(false)
 const newName = ref('')
 const newUrl = ref('')
 const newToken = ref('')
 
-const themes: { value: Theme; label: string }[] = [
-  { value: 'warm-stone', label: 'Warm Stone' },
-  { value: 'dark-slate', label: 'Dark Slate' },
-  { value: 'pure-minimal', label: 'Pure Minimal' },
-  { value: 'amber-glow', label: 'Amber Glow' },
+const themes: { value: Theme; label: string; descKey: string }[] = [
+  { value: 'warm-stone', label: 'Warm Stone', descKey: 'settings.themeWarmStoneDesc' },
+  { value: 'dark-slate', label: 'Dark Slate', descKey: 'settings.themeDarkSlateDesc' },
+  { value: 'pure-minimal', label: 'Pure Minimal', descKey: 'settings.themePureMinimalDesc' },
+  { value: 'amber-glow', label: 'Amber Glow', descKey: 'settings.themeAmberGlowDesc' },
 ]
 
 const fontSizes = [
-  { value: 'small' as const, label: 'S' },
-  { value: 'medium' as const, label: 'M' },
-  { value: 'large' as const, label: 'L' },
-  { value: 'xl' as const, label: 'XL' },
+  { value: 'small' as const, label: 'S', px: '10px' },
+  { value: 'medium' as const, label: 'M', px: '12px' },
+  { value: 'large' as const, label: 'L', px: '14px' },
+  { value: 'xl' as const, label: 'XL', px: '16px' },
+]
+
+const navItems: { id: Section; icon: typeof Server; labelKey: string }[] = [
+  { id: 'servers', icon: Server, labelKey: 'settings.servers' },
+  { id: 'appearance', icon: Palette, labelKey: 'settings.appearance' },
+  { id: 'language', icon: Globe, labelKey: 'settings.language' },
 ]
 
 async function handleAddServer() {
@@ -40,132 +53,153 @@ async function handleAddServer() {
   newToken.value = ''
   showAddForm.value = false
 }
-
-async function handleConnect(serverId: string) {
-  await connectServer(serverId)
-}
-
-async function handleDisconnect(serverId: string) {
-  await disconnectServer(serverId)
-}
-
-function handleRemove(serverId: string) {
-  removeServer(serverId)
-}
-
-function selectServer(serverId: string) {
-  activeServerId.value = serverId
-}
 </script>
 
 <template>
-  <div class="settings-panel">
-    <div class="panel-header">
-      <span class="panel-title">SETTINGS</span>
-    </div>
-
-    <div class="settings-content">
-      <!-- Servers -->
-      <div class="section">
-        <div class="section-label">SERVERS</div>
-        <div
-          v-for="server in servers"
-          :key="server.id"
-          :class="['setting-item', { active: server.id === activeServerId }]"
-        >
-          <StatusDot :status="server.status === 'connected' ? 'connected' : 'disconnected'" />
-          <span class="item-label" @click="selectServer(server.id)">{{ server.name }}</span>
-          <span class="item-hint">{{ server.status }}</span>
-          <div class="server-actions">
-            <button
-              v-if="server.status === 'disconnected'"
-              class="action-btn connect"
-              @click="handleConnect(server.id)"
-            >
-              Connect
-            </button>
-            <button
-              v-else-if="server.status === 'connected'"
-              class="action-btn disconnect"
-              @click="handleDisconnect(server.id)"
-            >
-              Disconnect
-            </button>
-            <button
-              v-else
-              class="action-btn connecting"
-              disabled
-            >
-              Connecting...
-            </button>
-            <button
-              class="action-btn remove"
-              @click="handleRemove(server.id)"
-            >
-              Remove
-            </button>
-          </div>
+  <div class="settings-overlay" @click.self="emit('close')">
+    <div class="settings-page">
+      <!-- Header -->
+      <header class="settings-header">
+        <div class="header-title">
+          <Monitor :size="18" />
+          <span>{{ $t('settings.title') }}</span>
         </div>
+        <button class="close-btn" @click="emit('close')">
+          <X :size="18" />
+        </button>
+      </header>
 
-        <!-- 添加服务器表单 -->
-        <div v-if="showAddForm" class="add-server-form">
-          <input
-            v-model="newName"
-            placeholder="Server name"
-            class="form-input"
-          />
-          <input
-            v-model="newUrl"
-            placeholder="http://localhost:8000"
-            class="form-input"
-          />
-          <input
-            v-model="newToken"
-            placeholder="Token (optional)"
-            type="password"
-            class="form-input"
-          />
-          <div class="form-actions">
-            <button class="btn-primary" @click="handleAddServer">Add</button>
-            <button class="btn-secondary" @click="showAddForm = false">Cancel</button>
-          </div>
-        </div>
-        <button v-else class="add-link" @click="showAddForm = true">+ Add Server</button>
-      </div>
-
-      <!-- Theme -->
-      <div class="section">
-        <div class="section-label">THEME</div>
-        <div
-          v-for="t in themes"
-          :key="t.value"
-          :class="['setting-item', { active: theme === t.value }]"
-          @click="setTheme(t.value)"
-        >
-          <span class="item-label">{{ t.label }}</span>
-        </div>
-      </div>
-
-      <!-- Font Size -->
-      <div class="section">
-        <div class="section-label">FONT SIZE</div>
-        <div class="font-size-options">
+      <div class="settings-body">
+        <!-- Left nav -->
+        <nav class="settings-nav">
           <button
-            v-for="opt in fontSizes"
-            :key="opt.value"
-            :class="['size-btn', { active: fontSize === opt.value }]"
-            @click="setFontSize(opt.value)"
+            v-for="item in navItems"
+            :key="item.id"
+            :class="['nav-item', { active: activeSection === item.id }]"
+            @click="activeSection = item.id"
           >
-            {{ opt.label }}
+            <component :is="item.icon" :size="16" />
+            <span>{{ $t(item.labelKey) }}</span>
           </button>
-        </div>
-      </div>
+        </nav>
 
-      <!-- Font Family -->
-      <div class="section">
-        <div class="section-label">FONT FAMILY</div>
-        <div class="font-input">
-          <input placeholder="Custom font stack..." spellcheck="false" />
+        <!-- Right content -->
+        <div class="settings-main">
+          <!-- Servers -->
+          <section v-if="activeSection === 'servers'" class="content-section">
+            <h2 class="section-title">{{ $t('settings.servers') }}</h2>
+            <p class="section-desc">{{ $t('settings.serversDesc') }}</p>
+
+            <div class="server-list">
+              <div
+                v-for="server in servers"
+                :key="server.id"
+                :class="['server-card', { active: server.id === activeServerId }]"
+              >
+                <div class="server-info">
+                  <StatusDot :status="server.status === 'connected' ? 'connected' : 'disconnected'" />
+                  <div class="server-detail">
+                    <span class="server-name" @click="activeServerId = server.id">{{ server.name }}</span>
+                    <span class="server-status">{{ server.status }}</span>
+                  </div>
+                </div>
+                <div class="server-actions">
+                  <button
+                    v-if="server.status === 'disconnected'"
+                    class="btn btn-accent"
+                    @click="connectServer(server.id)"
+                  >{{ $t('settings.connect') }}</button>
+                  <button
+                    v-else-if="server.status === 'connected'"
+                    class="btn btn-ghost"
+                    @click="disconnectServer(server.id)"
+                  >{{ $t('settings.disconnect') }}</button>
+                  <button
+                    v-else
+                    class="btn btn-ghost"
+                    disabled
+                  >{{ $t('settings.connecting') }}</button>
+                  <button class="btn btn-danger-ghost" @click="removeServer(server.id)">
+                    {{ $t('common.remove') }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add form -->
+            <div v-if="showAddForm" class="add-form">
+              <div class="form-row">
+                <input v-model="newName" :placeholder="$t('settings.serverName')" class="form-input" />
+                <input v-model="newUrl" placeholder="http://localhost:8000" class="form-input" />
+                <input v-model="newToken" :placeholder="$t('settings.tokenOptional')" type="password" class="form-input" />
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-accent" @click="handleAddServer">{{ $t('common.add') }}</button>
+                <button class="btn btn-ghost" @click="showAddForm = false">{{ $t('common.cancel') }}</button>
+              </div>
+            </div>
+            <button v-else class="add-btn" @click="showAddForm = true">
+              + {{ $t('settings.addServer') }}
+            </button>
+          </section>
+
+          <!-- Appearance -->
+          <section v-if="activeSection === 'appearance'" class="content-section">
+            <h2 class="section-title">{{ $t('settings.theme') }}</h2>
+            <p class="section-desc">{{ $t('settings.themeDesc') }}</p>
+
+            <div class="theme-grid">
+              <div
+                v-for="t in themes"
+                :key="t.value"
+                :class="['theme-card', { active: theme === t.value }]"
+                @click="setTheme(t.value)"
+              >
+                <div class="theme-preview" :data-theme-preview="t.value"></div>
+                <div class="theme-info">
+                  <span class="theme-name">{{ t.label }}</span>
+                  <span class="theme-desc">{{ $t(t.descKey) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 2rem">{{ $t('settings.fontSize') }}</h2>
+            <p class="section-desc">{{ $t('settings.fontSizeDesc') }}</p>
+
+            <div class="font-size-row">
+              <button
+                v-for="opt in fontSizes"
+                :key="opt.value"
+                :class="['font-btn', { active: fontSize === opt.value }]"
+                @click="setFontSize(opt.value)"
+              >
+                <span class="font-label">{{ opt.label }}</span>
+                <span class="font-px">{{ opt.px }}</span>
+              </button>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 2rem">{{ $t('settings.fontFamily') }}</h2>
+            <p class="section-desc">{{ $t('settings.fontFamilyDesc') }}</p>
+            <input :placeholder="$t('settings.fontFamilyPlaceholder')" class="form-input wide" spellcheck="false" />
+          </section>
+
+          <!-- Language -->
+          <section v-if="activeSection === 'language'" class="content-section">
+            <h2 class="section-title">{{ $t('settings.language') }}</h2>
+            <p class="section-desc">{{ $t('settings.languageDesc') }}</p>
+
+            <div class="lang-list">
+              <div
+                v-for="loc in supportedLocales"
+                :key="loc.code"
+                :class="['lang-item', { active: currentLocale === loc.code }]"
+                @click="setLocale(loc.code)"
+              >
+                <span class="lang-name">{{ loc.name }}</span>
+                <span v-if="currentLocale === loc.code" class="lang-check">✓</span>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -173,249 +207,438 @@ function selectServer(serverId: string) {
 </template>
 
 <style scoped>
-.settings-panel {
-  display: flex;
-  flex-direction: column;
-  width: var(--sidebar-width);
-  border-right: 1px solid var(--color-border);
-  background: var(--color-surface);
-  height: 100%;
-}
-
-.panel-header {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.panel-title {
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-tertiary);
-  letter-spacing: 1.5px;
-}
-
-.settings-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 8px;
-}
-
-.section {
-  margin-bottom: 16px;
-}
-
-.section-label {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  font-weight: var(--font-semibold);
-  letter-spacing: 1px;
-  margin-bottom: 4px;
-  padding: 0 8px;
-}
-
-.setting-item {
-  padding: 6px 8px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  left: var(--activity-bar-width);
+  z-index: var(--z-overlay);
+  background: var(--color-overlay);
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  transition: background-color var(--transition-fast);
+  justify-content: center;
+  animation: fadeIn var(--transition-normal) var(--ease-out);
 }
 
-.setting-item:hover {
-  background: var(--color-surface-hover);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.setting-item.active {
-  background: var(--color-activity-active);
-  color: var(--color-accent);
-}
-
-.item-label {
-  flex: 1;
-  font-size: var(--text-sm);
-}
-
-.item-hint {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-}
-
-.add-link {
-  padding: 5px 8px;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  width: 100%;
-  margin-top: 2px;
-  transition: border-color var(--transition-fast), color var(--transition-fast);
-}
-
-.add-link:hover {
-  border-color: var(--color-text-tertiary);
-  color: var(--color-text-secondary);
-}
-
-.font-input {
-  padding: 0 8px;
-}
-
-.font-input input {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+.settings-page {
+  width: calc(100vw - var(--activity-bar-width) - 4rem);
+  max-width: 56rem;
+  height: calc(100vh - 4rem);
   background: var(--color-surface);
-  font-size: var(--text-xs);
-  color: var(--color-text);
-  outline: none;
-  font-family: var(--font-mono);
-}
-
-.font-input input:focus {
-  border-color: var(--color-accent);
-}
-
-.font-size-options {
-  display: flex;
-  gap: 4px;
-  padding: 0 8px;
-}
-
-.size-btn {
-  flex: 1;
-  padding: 5px 0;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp var(--transition-slow) var(--ease-out);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header */
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+}
+
+.close-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: none;
   background: transparent;
+  color: var(--color-text-tertiary);
   cursor: pointer;
-  font-size: var(--text-xs);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.close-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+/* Body */
+.settings-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left nav */
+.settings-nav {
+  width: 10rem;
+  border-right: 1px solid var(--color-border);
+  padding: 0.75rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
   color: var(--color-text-secondary);
-  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  text-align: left;
 }
 
-.size-btn:hover {
-  border-color: var(--color-text-tertiary);
+.nav-item:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
 }
 
-.size-btn.active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+.nav-item.active {
   background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: var(--font-medium);
+}
+
+/* Right content */
+.settings-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+}
+
+.content-section {
+  max-width: 36rem;
+}
+
+.section-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  margin: 0 0 0.25rem;
+}
+
+.section-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin: 0 0 1.25rem;
+}
+
+/* Server cards */
+.server-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.server-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.server-card:hover {
+  border-color: var(--color-border-strong);
+}
+
+.server-card.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.server-info {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.server-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.server-name {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.server-status {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
 }
 
 .server-actions {
   display: flex;
-  gap: 4px;
-  margin-left: auto;
+  gap: 0.375rem;
 }
 
-.action-btn {
-  padding: 2px 6px;
+/* Buttons */
+.btn {
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
   background: transparent;
+  font-size: var(--text-sm);
   cursor: pointer;
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
-.action-btn:hover:not(:disabled) {
+.btn-accent {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-surface);
+}
+
+.btn-accent:hover {
+  opacity: 0.9;
+}
+
+.btn-ghost {
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover {
   background: var(--color-surface-hover);
 }
 
-.action-btn.connect {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+.btn-danger-ghost {
+  color: var(--color-error);
+  border-color: transparent;
 }
 
-.action-btn.disconnect {
-  border-color: var(--color-text-tertiary);
-  color: var(--color-text-tertiary);
+.btn-danger-ghost:hover {
+  background: var(--color-error-soft);
 }
 
-.action-btn.remove {
-  border-color: var(--color-danger, #ef4444);
-  color: var(--color-danger, #ef4444);
-}
-
-.action-btn.remove:hover:not(:disabled) {
-  background: var(--color-danger-soft, #fef2f2);
-}
-
-.action-btn.connecting {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.add-server-form {
-  padding: 8px;
+/* Add form */
+.add-form {
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  margin-top: 4px;
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+.form-row {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .form-input {
-  width: 100%;
-  padding: 6px 8px;
+  flex: 1;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-surface);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--color-text);
   outline: none;
   font-family: var(--font-mono);
+  transition: border-color var(--transition-fast);
 }
 
 .form-input:focus {
   border-color: var(--color-accent);
 }
 
+.form-input.wide {
+  width: 100%;
+  max-width: 24rem;
+}
+
 .form-actions {
   display: flex;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 0.5rem;
 }
 
-.btn-primary {
-  flex: 1;
-  padding: 5px 0;
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-sm);
-  background: var(--color-accent);
+.add-btn {
+  padding: 0.5rem 1rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
   cursor: pointer;
-  font-size: var(--text-xs);
-  color: var(--color-surface);
-  transition: opacity var(--transition-fast);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
+.add-btn:hover {
+  border-color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
-.btn-secondary {
-  flex: 1;
-  padding: 5px 0;
+/* Theme grid */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.theme-card {
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.theme-card:hover {
+  border-color: var(--color-border-strong);
+}
+
+.theme-card.active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.theme-preview {
+  height: 3.5rem;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.theme-preview[data-theme-preview="warm-stone"] {
+  background: linear-gradient(135deg, #faf8f5 50%, #f5f3f0 50%);
+}
+
+.theme-preview[data-theme-preview="dark-slate"] {
+  background: linear-gradient(135deg, #1a1d23 50%, #25282e 50%);
+}
+
+.theme-preview[data-theme-preview="pure-minimal"] {
+  background: linear-gradient(135deg, #ffffff 50%, #fafafa 50%);
+}
+
+.theme-preview[data-theme-preview="amber-glow"] {
+  background: linear-gradient(135deg, #0d0d0d 50%, #141414 50%);
+}
+
+.theme-info {
+  padding: 0.625rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.theme-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
+}
+
+.theme-desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* Font size */
+.font-size-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.font-btn {
+  flex: 1;
+  padding: 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   background: transparent;
   cursor: pointer;
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  transition: border-color var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
-.btn-secondary:hover {
-  border-color: var(--color-text-tertiary);
+.font-btn:hover {
+  border-color: var(--color-border-strong);
+}
+
+.font-btn.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.font-label {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+}
+
+.font-px {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* Language */
+.lang-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.lang-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.lang-item:hover {
+  border-color: var(--color-border-strong);
+}
+
+.lang-item.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.lang-name {
+  font-size: var(--text-base);
+  color: var(--color-text);
+}
+
+.lang-check {
+  color: var(--color-accent);
+  font-weight: var(--font-semibold);
 }
 </style>

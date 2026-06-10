@@ -13,6 +13,9 @@ import EventStream from '../components/EventStream.vue'
 import { useWebSocket } from '../composables/useWebSocket'
 import { useTask } from '../composables/useTask'
 import { listAgents, type Agent, type Project } from '../api/client'
+import { useI18n } from 'vue-i18n'
+
+useI18n()
 
 const props = defineProps<{
   project: Project
@@ -119,9 +122,9 @@ function toggleAgents() {
       <span class="task-title">{{ project.name }}</span>
       <StatusDot :status="taskStatus" />
       <button class="agents-btn" @click="toggleAgents" :class="{ active: showAgents }">
-        Agents ({{ agents.length }})
+        {{ $t('agents.title') }} ({{ agents.length }})
       </button>
-      <span class="ws-status">{{ connected ? 'connected' : 'disconnected' }}</span>
+      <span class="ws-status">{{ connected ? $t('common.connected') : $t('common.disconnected') }}</span>
     </div>
 
     <div class="content-area">
@@ -156,11 +159,11 @@ function toggleAgents() {
           />
           <div v-else-if="msg.type === 'plan_start'" class="plan-event">
             <span class="plan-icon">📋</span>
-            <span>分析任务中...</span>
+            <span>{{ $t('plan.analyzing') }}</span>
           </div>
           <div v-else-if="msg.type === 'plan_generated'" class="plan-event">
             <span class="plan-icon">✅</span>
-            <span>计划生成：{{ msg.data.steps }} 个步骤</span>
+            <span>{{ $t('plan.generated', { n: msg.data.steps }) }}</span>
             <div v-if="msg.data.plan" class="plan-steps">
               <div v-for="(step, j) in msg.data.plan" :key="j" class="plan-step">
                 <span class="step-type">{{ step.type }}</span>
@@ -170,7 +173,7 @@ function toggleAgents() {
           </div>
           <div v-else-if="msg.type === 'plan_completed'" class="plan-event">
             <span class="plan-icon">{{ msg.data.success ? '✅' : '❌' }}</span>
-            <span>执行{{ msg.data.success ? '成功' : '失败' }}：{{ msg.data.results?.length || 0 }} 个结果</span>
+            <span>{{ msg.data.success ? $t('plan.success', { n: msg.data.results?.length || 0 }) : $t('plan.failed', { n: msg.data.results?.length || 0 }) }}</span>
           </div>
         </template>
       </div>

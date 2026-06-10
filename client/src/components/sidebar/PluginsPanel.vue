@@ -6,7 +6,7 @@ import { Puzzle } from 'lucide-vue-next'
   <div class="plugins-panel">
     <div class="empty-state">
       <Puzzle />
-      <p>No plugins yet</p>
+      <p>{{ $t('plugins.noPlugins') }}</p>
     </div>
   </div>
 </template>

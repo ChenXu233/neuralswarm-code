@@ -1,40 +1,40 @@
 <template>
   <div class="memory-panel">
     <div class="panel-header">
-      <span class="panel-title">记忆</span>
+      <span class="panel-title">{{ $t('memory.title') }}</span>
       <select v-model="selectedLevel" @change="loadMemory" class="level-select">
-        <option value="L1">L1 事件流</option>
-        <option value="L2">L2 知识</option>
-        <option value="L3">L3 偏好</option>
+        <option value="L1">{{ $t('memory.l1Events') }}</option>
+        <option value="L2">{{ $t('memory.l2Knowledge') }}</option>
+        <option value="L3">{{ $t('memory.l3Preferences') }}</option>
       </select>
     </div>
 
     <div class="memory-content">
-      <div v-if="loading" class="loading">加载中...</div>
+      <div v-if="loading" class="loading">{{ $t('memory.loading') }}</div>
 
       <div v-else-if="selectedLevel === 'L1'" class="event-list">
         <div v-for="(event, index) in memories" :key="index" class="event-item">
           <span class="event-type">{{ event.event }}</span>
           <span class="event-detail">{{ event.detail }}</span>
         </div>
-        <div v-if="memories.length === 0" class="empty">暂无事件</div>
+        <div v-if="memories.length === 0" class="empty">{{ $t('memory.noEvents') }}</div>
       </div>
 
       <div v-else-if="selectedLevel === 'L2'" class="knowledge-list">
         <div v-for="(item, index) in memories" :key="index" class="knowledge-item">
           <div class="knowledge-content">{{ item.content }}</div>
-          <div class="knowledge-source">来源: {{ item.source }}</div>
+          <div class="knowledge-source">{{ $t('memory.source', { source: item.source }) }}</div>
         </div>
-        <div v-if="memories.length === 0" class="empty">暂无知识</div>
+        <div v-if="memories.length === 0" class="empty">{{ $t('memory.noKnowledge') }}</div>
       </div>
 
       <div v-else-if="selectedLevel === 'L3'" class="preference-list">
-        <div v-if="memories.length === 0" class="empty">暂无偏好设置</div>
+        <div v-if="memories.length === 0" class="empty">{{ $t('memory.noPreferences') }}</div>
       </div>
     </div>
 
     <div class="panel-footer">
-      <button @click="loadMemory" :disabled="loading" class="refresh-btn">刷新</button>
+      <button @click="loadMemory" :disabled="loading" class="refresh-btn">{{ $t('memory.refresh') }}</button>
     </div>
   </div>
 </template>

@@ -2,16 +2,25 @@
 import { MessageSquare, Folder, Puzzle, Settings, Database } from 'lucide-vue-next'
 
 const props = defineProps<{
-  activePanel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings' | null
+  activePanel: 'chat' | 'files' | 'plugins' | 'memory' | null
+  showSettings: boolean
 }>()
 
 const emit = defineEmits<{
-  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings' | null]
+  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'memory' | null]
+  'toggleSettings': []
 }>()
 
-function handleClick(panel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings') {
-  // Toggle: if same panel is clicked, collapse; otherwise switch
+function handleClick(panel: 'chat' | 'files' | 'plugins' | 'memory') {
+  // Close settings if open when switching panels
+  if (props.showSettings) {
+    emit('toggleSettings')
+  }
   emit('update:activePanel', props.activePanel === panel ? null : panel)
+}
+
+function handleSettingsClick() {
+  emit('toggleSettings')
 }
 </script>
 
@@ -21,29 +30,29 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings'
 
     <div class="top-icons">
       <button
-        :class="['activity-btn', { active: activePanel === 'chat' }]"
-        title="Chat"
+        :class="['activity-btn', { active: activePanel === 'chat' && !showSettings }]"
+        :title="$t('activity.chat')"
         @click="handleClick('chat')"
       >
         <MessageSquare />
       </button>
       <button
-        :class="['activity-btn', { active: activePanel === 'files' }]"
-        title="Files"
+        :class="['activity-btn', { active: activePanel === 'files' && !showSettings }]"
+        :title="$t('activity.files')"
         @click="handleClick('files')"
       >
         <Folder />
       </button>
       <button
-        :class="['activity-btn', { active: activePanel === 'plugins' }]"
-        title="Plugins"
+        :class="['activity-btn', { active: activePanel === 'plugins' && !showSettings }]"
+        :title="$t('activity.plugins')"
         @click="handleClick('plugins')"
       >
         <Puzzle />
       </button>
       <button
-        :class="['activity-btn', { active: activePanel === 'memory' }]"
-        title="Memory"
+        :class="['activity-btn', { active: activePanel === 'memory' && !showSettings }]"
+        :title="$t('activity.memory')"
         @click="handleClick('memory')"
       >
         <Database />
@@ -52,9 +61,9 @@ function handleClick(panel: 'chat' | 'files' | 'plugins' | 'memory' | 'settings'
 
     <div class="bottom-icons">
       <button
-        :class="['activity-btn', { active: activePanel === 'settings' }]"
-        title="Settings"
-        @click="handleClick('settings')"
+        :class="['activity-btn', { active: showSettings }]"
+        :title="$t('activity.settings')"
+        @click="handleSettingsClick"
       >
         <Settings />
         <span class="connection-dot"></span>

@@ -31,7 +31,7 @@ function handleKeydown(e: KeyboardEvent) {
     <div class="input-wrapper">
       <textarea
         v-model="text"
-        placeholder="Type a message..."
+        :placeholder="$t('chat.typeMessage')"
         @keydown="handleKeydown"
         rows="1"
       ></textarea>

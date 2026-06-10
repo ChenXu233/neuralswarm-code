@@ -16,8 +16,8 @@ const statusColors: Record<string, string> = {
 
 <template>
   <div class="task-queue">
-    <h3>Task Queue</h3>
-    <div v-if="tasks.length === 0" class="empty">No tasks in queue</div>
+    <h3>{{ $t('task.queue') }}</h3>
+    <div v-if="tasks.length === 0" class="empty">{{ $t('task.noTasks') }}</div>
     <div v-for="task in tasks" :key="task.id" class="task-card">
       <div class="task-header">
         <span class="task-id">{{ task.id.slice(0, 8) }}</span>

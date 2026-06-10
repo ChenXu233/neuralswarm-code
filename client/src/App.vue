@@ -12,12 +12,15 @@ import HomePage from './components/HomePage.vue'
 import TaskView from './views/TaskView.vue'
 import { useTask } from './composables/useTask'
 import { listProjects, type Project, type Task } from './api/client'
+import { useI18n } from 'vue-i18n'
 
+useI18n()
 useTheme()
 
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
-const activePanel = ref<'chat' | 'files' | 'plugins' | 'memory' | 'settings' | null>('chat')
+const activePanel = ref<'chat' | 'files' | 'plugins' | 'memory' | null>('chat')
+const showSettings = ref(false)
 
 const { tasks, currentTask, loadTasks } = useTask()
 
@@ -42,17 +45,25 @@ function handleBack() {
   selectedProject.value = null
 }
 
+function handleToggleSettings() {
+  showSettings.value = !showSettings.value
+}
+
 loadProjects()
 </script>
 
 <template>
   <div id="app" class="app-layout">
-    <ActivityBar v-model:active-panel="activePanel" />
+    <ActivityBar
+      v-model:active-panel="activePanel"
+      :show-settings="showSettings"
+      @toggle-settings="handleToggleSettings"
+    />
 
-    <!-- Shared sidebar: visible when any panel is active, regardless of page -->
+    <!-- Sidebar: visible when a panel is active and settings is closed -->
     <Sidebar
-      v-if="activePanel && activePanel !== 'settings'"
-      :title="activePanel === 'chat' ? 'Chat' : activePanel === 'files' ? 'Files' : activePanel === 'plugins' ? 'Plugins' : 'Memory'"
+      v-if="activePanel && !showSettings"
+      :title="activePanel === 'chat' ? $t('sidebar.chat') : activePanel === 'files' ? $t('sidebar.files') : activePanel === 'plugins' ? $t('sidebar.plugins') : $t('sidebar.memory')"
     >
       <ChatPanel
         v-if="activePanel === 'chat'"
@@ -64,11 +75,6 @@ loadProjects()
       <PluginsPanel v-else-if="activePanel === 'plugins'" />
       <MemoryPanel v-else-if="activePanel === 'memory'" :project-id="selectedProject?.id || ''" />
     </Sidebar>
-
-    <SettingsPanel
-      v-else-if="activePanel === 'settings'"
-      :servers="[]"
-    />
 
     <div class="app-content">
       <HomePage
@@ -82,6 +88,9 @@ loadProjects()
         @back="handleBack"
       />
     </div>
+
+    <!-- Settings overlay -->
+    <SettingsPanel v-if="showSettings" @close="showSettings = false" />
   </div>
 </template>
 

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ChevronRight, ChevronDown, Copy, Undo2 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+useI18n()
 
 export interface DiffLine {
   type: 'add' | 'remove' | 'context'
@@ -67,8 +70,8 @@ async function handleCopy() {
       <div v-if="expanded" class="diff-body">
         <!-- Column headers -->
         <div class="diff-columns-header">
-          <div class="diff-col old-col">− OLD</div>
-          <div class="diff-col new-col">+ NEW</div>
+          <div class="diff-col old-col">− {{ $t('diff.old') }}</div>
+          <div class="diff-col new-col">+ {{ $t('diff.new') }}</div>
         </div>
 
         <!-- Side-by-side diff -->
@@ -101,19 +104,19 @@ async function handleCopy() {
 
         <!-- Truncation hint -->
         <div v-if="truncated" class="diff-truncation" @click="toggleFull">
-          <span v-if="fullyExpanded">Show less</span>
-          <span v-else>Show all {{ lines.length }} lines</span>
+          <span v-if="fullyExpanded">{{ $t('diff.showLess') }}</span>
+          <span v-else>{{ $t('diff.showAll', { n: lines.length }) }}</span>
         </div>
 
         <!-- Actions -->
         <div class="diff-actions">
           <button class="diff-action-btn" @click="handleCopy">
             <Copy />
-            <span>{{ copied ? 'Copied' : 'Copy' }}</span>
+            <span>{{ copied ? $t('common.copied') : $t('common.copy') }}</span>
           </button>
           <button class="diff-action-btn" @click="emit('undo')">
             <Undo2 />
-            Undo
+            {{ $t('common.undo') }}
           </button>
         </div>
       </div>

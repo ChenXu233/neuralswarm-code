@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { Folder, Plus, MessageSquare, ArrowLeft, Globe } from 'lucide-vue-next'
 import type { Project } from '../api/client'
 import { canOpenLocalFolder } from '../utils/platform'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps<{
   projects: Project[]
@@ -22,9 +25,9 @@ function formatTime(dateStr: string) {
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(hours / 24)
 
-  if (hours < 1) return 'just now'
-  if (hours < 24) return `${hours}h ago`
-  return `${days}d ago`
+  if (hours < 1) return t('home.justNow')
+  if (hours < 24) return t('home.hoursAgo', { n: hours })
+  return t('home.daysAgo', { n: days })
 }
 </script>
 
@@ -46,7 +49,7 @@ function formatTime(dateStr: string) {
         <Transition name="slide-fade" mode="out-in">
           <!-- Projects list -->
           <div v-if="!showOptions" key="projects" class="projects-content">
-            <div class="section-label">RECENT</div>
+            <div class="section-label">{{ $t('home.recent') }}</div>
             <div class="project-list">
               <div
                 v-for="project in projects"
@@ -59,53 +62,53 @@ function formatTime(dateStr: string) {
                 <span class="project-time">{{ formatTime(project.updated_at) }}</span>
               </div>
               <div v-if="projects.length === 0" class="empty-hint">
-                No recent projects
+                {{ $t('home.noRecentProjects') }}
               </div>
             </div>
             <button class="open-btn" @click="showOptions = true">
-              Open...
+              {{ $t('home.open') }}
             </button>
           </div>
 
           <!-- Options page -->
           <div v-else key="options" class="options-content">
-            <div class="section-label">START A SESSION</div>
+            <div class="section-label">{{ $t('home.startSession') }}</div>
             <div class="options-list">
               <div v-if="canOpenLocalFolder()" class="option-item">
                 <Folder />
                 <div class="option-info">
-                  <div class="option-title">Open Folder</div>
-                  <div class="option-desc">Browse a local directory</div>
+                  <div class="option-title">{{ $t('home.openFolder') }}</div>
+                  <div class="option-desc">{{ $t('home.browseLocal') }}</div>
                 </div>
                 <span class="option-shortcut">Ctrl+O</span>
               </div>
               <div v-else class="option-item">
                 <Globe />
                 <div class="option-info">
-                  <div class="option-title">Connect Cloud</div>
-                  <div class="option-desc">Link a cloud project</div>
+                  <div class="option-title">{{ $t('home.connectCloud') }}</div>
+                  <div class="option-desc">{{ $t('home.linkCloud') }}</div>
                 </div>
               </div>
               <div class="option-item">
                 <Plus />
                 <div class="option-info">
-                  <div class="option-title">New Project</div>
-                  <div class="option-desc">Start from scratch</div>
+                  <div class="option-title">{{ $t('home.newProject') }}</div>
+                  <div class="option-desc">{{ $t('home.startFromScratch') }}</div>
                 </div>
                 <span class="option-shortcut">Ctrl+N</span>
               </div>
               <div class="option-item accent" @click="emit('global')">
                 <MessageSquare />
                 <div class="option-info">
-                  <div class="option-title">Global Mode</div>
-                  <div class="option-desc">No project context</div>
+                  <div class="option-title">{{ $t('home.globalMode') }}</div>
+                  <div class="option-desc">{{ $t('home.noProjectContext') }}</div>
                 </div>
                 <span class="option-shortcut">Ctrl+G</span>
               </div>
             </div>
             <button class="back-link" @click="showOptions = false">
               <ArrowLeft />
-              Back
+              {{ $t('common.back') }}
             </button>
           </div>
         </Transition>

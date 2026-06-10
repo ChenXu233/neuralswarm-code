@@ -12,24 +12,24 @@ const emit = defineEmits<{
 
 <template>
   <div v-if="conflict" class="conflict-dialog">
-    <h3>File Conflict: {{ conflict.file_path }}</h3>
+    <h3>{{ $t('conflict.title', { path: conflict.file_path }) }}</h3>
     <div class="conflict-info">
-      <p>Agent {{ conflict.agent_id }} wants to modify a file that was changed by Agent {{ conflict.other_agent_id }}</p>
+      <p>{{ $t('conflict.description', { agentId: conflict.agent_id, otherAgentId: conflict.other_agent_id }) }}</p>
     </div>
     <div class="diff-view">
       <div class="diff-side">
-        <h4>Current Content</h4>
+        <h4>{{ $t('conflict.currentContent') }}</h4>
         <pre>{{ conflict.current_content }}</pre>
       </div>
       <div class="diff-side">
-        <h4>New Content</h4>
+        <h4>{{ $t('conflict.newContent') }}</h4>
         <pre>{{ conflict.new_content }}</pre>
       </div>
     </div>
     <div class="actions">
-      <button @click="emit('decide', 're_read')">Re-read & Retry</button>
-      <button @click="emit('decide', 'overwrite')" class="danger">Overwrite</button>
-      <button @click="emit('decide', 'submit_to_scheduler')">Submit to Scheduler</button>
+      <button @click="emit('decide', 're_read')">{{ $t('conflict.reRead') }}</button>
+      <button @click="emit('decide', 'overwrite')" class="danger">{{ $t('conflict.overwrite') }}</button>
+      <button @click="emit('decide', 'submit_to_scheduler')">{{ $t('conflict.submitToScheduler') }}</button>
     </div>
   </div>
 </template>

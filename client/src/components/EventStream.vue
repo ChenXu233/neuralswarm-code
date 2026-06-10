@@ -1,8 +1,8 @@
 <template>
   <div class="event-stream">
     <div class="stream-header">
-      <span class="stream-title">事件流</span>
-      <span class="event-count">{{ events.length }} 个事件</span>
+      <span class="stream-title">{{ $t('event.stream') }}</span>
+      <span class="event-count">{{ $t('event.count', { n: events.length }) }}</span>
     </div>
 
     <div class="stream-content" ref="streamRef">
@@ -11,7 +11,7 @@
         <span class="event-type-badge" :class="event.type">{{ event.type }}</span>
         <span class="event-data">{{ event.data }}</span>
       </div>
-      <div v-if="events.length === 0" class="empty">暂无事件</div>
+      <div v-if="events.length === 0" class="empty">{{ $t('event.noEvents') }}</div>
     </div>
   </div>
 </template>

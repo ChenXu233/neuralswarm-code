@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Copy, Check } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+useI18n()
 
 defineProps<{
   code: string
@@ -23,7 +26,7 @@ async function handleCopy(code: string) {
       <button class="copy-btn" @click="handleCopy(code)">
         <Check v-if="copied" />
         <Copy v-else />
-        <span>{{ copied ? 'Copied' : 'Copy' }}</span>
+        <span>{{ copied ? $t('common.copied') : $t('common.copy') }}</span>
       </button>
     </div>
     <pre><code>{{ code }}</code></pre>

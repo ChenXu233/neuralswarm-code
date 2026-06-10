@@ -9,7 +9,7 @@ defineProps<{
 <template>
   <div class="files-panel">
     <div class="panel-header">
-      <span class="panel-title">EXPLORER</span>
+      <span class="panel-title">{{ $t('files.explorer') }}</span>
     </div>
 
     <div v-if="hasOpenProject" class="file-tree">
@@ -18,8 +18,8 @@ defineProps<{
 
     <div v-else class="empty-state">
       <Folder />
-      <p class="empty-title">No project open</p>
-      <p class="empty-desc">Open a project to browse its files,<br/>or start a global chat.</p>
+      <p class="empty-title">{{ $t('files.noProject') }}</p>
+      <p class="empty-desc" v-html="$t('files.noProjectDesc')"></p>
     </div>
   </div>
 </template>

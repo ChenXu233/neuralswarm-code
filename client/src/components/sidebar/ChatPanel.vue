@@ -40,7 +40,7 @@ function formatTime(dateStr: string): string {
   <div class="chat-panel">
     <!-- Header: title + add button -->
     <div class="panel-header">
-      <span class="panel-title">TASKS</span>
+      <span class="panel-title">{{ $t('chat.tasks') }}</span>
       <button class="add-btn" @click="$emit('create')">
         <Plus />
       </button>
@@ -49,7 +49,7 @@ function formatTime(dateStr: string): string {
     <!-- Search -->
     <div class="search-box">
       <Search />
-      <input placeholder="Filter tasks..." />
+      <input :placeholder="$t('chat.filterTasks')" />
     </div>
 
     <!-- Task list -->

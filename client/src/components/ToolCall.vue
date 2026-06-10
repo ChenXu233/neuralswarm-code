@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const MCP_TOOLS = [
   'mcp_file_read',
@@ -34,22 +37,22 @@ function formatJson(obj: any): string {
 
 const toolDisplayName = computed(() => {
   const names: Record<string, string> = {
-    'mcp_file_read': '读取文件',
-    'mcp_file_write': '写入文件',
-    'mcp_shell_execute': '执行命令',
-    'mcp_git_log': 'Git 日志',
-    'mcp_git_diff': 'Git diff'
+    'mcp_file_read': t('tool.reading'),
+    'mcp_file_write': t('tool.writing'),
+    'mcp_shell_execute': t('tool.executing'),
+    'mcp_git_log': t('tool.gitLog'),
+    'mcp_git_diff': t('tool.gitDiff')
   }
   return names[props.tool] || props.tool
 })
 
 const statusText = computed(() => {
   switch (props.status) {
-    case 'pending': return '等待中'
-    case 'running': return '执行中'
-    case 'completed': return '完成'
-    case 'failed': return '失败'
-    default: return props.output ? '完成' : '...'
+    case 'pending': return t('tool.status.pending')
+    case 'running': return t('tool.status.running')
+    case 'completed': return t('tool.status.completed')
+    case 'failed': return t('tool.status.failed')
+    default: return props.output ? t('common.done') : '...'
   }
 })
 </script>
@@ -72,7 +75,7 @@ const statusText = computed(() => {
       </span>
       <span class="tool-name" :class="{ 'mcp-name': isMcpTool }">{{ isMcpTool ? toolDisplayName : tool }}</span>
       <span v-if="status" :class="['tool-status', status]">{{ statusText }}</span>
-      <span v-else-if="output" class="tool-stat done">done</span>
+      <span v-else-if="output" class="tool-stat done">{{ $t('common.done') }}</span>
       <span v-else class="tool-stat pending">...</span>
     </div>
 
@@ -81,13 +84,13 @@ const statusText = computed(() => {
       <div v-if="expanded" class="tool-body">
         <!-- Parameters -->
         <div class="tool-section">
-          <div class="tool-section-label">PARAMETERS</div>
+          <div class="tool-section-label">{{ $t('tool.parameters') }}</div>
           <pre class="tool-code">{{ formatJson(args) }}</pre>
         </div>
 
         <!-- Result -->
         <div v-if="output" class="tool-section result-section">
-          <div class="tool-section-label">RESULT</div>
+          <div class="tool-section-label">{{ $t('tool.result') }}</div>
           <pre class="tool-code">{{ output }}</pre>
         </div>
       </div>

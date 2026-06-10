@@ -17,8 +17,8 @@ const statusColors: Record<string, string> = {
 
 <template>
   <div class="agent-panel">
-    <h3>Agents</h3>
-    <div v-if="agents.length === 0" class="empty">No active agents</div>
+    <h3>{{ $t('agents.title') }}</h3>
+    <div v-if="agents.length === 0" class="empty">{{ $t('agents.noAgents') }}</div>
     <div v-for="agent in agents" :key="agent.id" class="agent-card">
       <div class="agent-header">
         <span class="agent-name">{{ agent.name }}</span>
