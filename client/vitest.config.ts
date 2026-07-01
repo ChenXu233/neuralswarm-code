@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     include: ['src/**/*.spec.ts'],
+    exclude: ['src/**/*.e2e.spec.ts'],
     coverage: {
       provider: 'v8',
       include: [
