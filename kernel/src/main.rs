@@ -35,7 +35,10 @@ async fn main() -> anyhow::Result<()> {
     // 4. 创建管道引擎
     let pipeline = Arc::new(kernel::pipeline::Pipeline::new(registry));
 
-    // 5. 启动 HTTP 服务
+    // 5. 为 LLM handler 注入 pipeline 引用（tool call 路由用）
+    plugins::llm::set_pipeline(pipeline.clone());
+
+    // 6. 启动 HTTP 服务
     let state = Arc::new(server::AppState {
         pipeline,
         workspace,

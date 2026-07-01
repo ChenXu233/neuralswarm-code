@@ -15,8 +15,8 @@ tower-http = { version = "0.5", features = ["cors"] }
 clap = { version = "4", features = ["derive"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
+reqwest = { version = "0.12", features = ["json"] }
 
 [dev-dependencies]
-reqwest = { version = "0.12", features = ["json"] }
 
 [workspace]

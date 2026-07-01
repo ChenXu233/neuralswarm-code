@@ -1,6 +1,18 @@
-// MVP stub：后续接入 clark-agent + litellm-rs
-use crate::kernel::registry::Registry;
+pub mod handler;
 
-pub fn register(_registry: &mut Registry) {
-    // TODO: 注册 llm-prompt → llm-response
+use std::sync::Arc;
+use crate::kernel::registry::{Registry, HandlerRegistration};
+use crate::kernel::pipeline::Pipeline;
+
+pub fn register_handler(registry: &mut Registry) {
+    registry.register("llm-prompt", HandlerRegistration {
+        id: "llm".into(),
+        handler: Arc::new(handler::LLMHandler),
+        before: vec![],
+        after: vec![],
+    }).expect("register llm-prompt");
+}
+
+pub fn set_pipeline(pipeline: Arc<Pipeline>) {
+    handler::set_pipeline(pipeline);
 }
