@@ -155,6 +155,7 @@ impl Handler for LLMHandler {
 
                 let tool_ctx = Context {
                     session_id: ctx.session_id.clone(),
+                    workspace_path: ctx.workspace_path.clone(),
                     trace_id: ctx.trace_id.clone(),
                     messages: vec![],
                     tool_calls: vec![tc.clone()],

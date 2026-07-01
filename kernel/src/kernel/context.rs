@@ -6,12 +6,28 @@ use serde_json::Value;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Context {
     pub session_id: String,
+    pub workspace_path: String,
     pub trace_id: String,
     pub messages: Vec<Message>,
     pub tool_calls: Vec<ToolCall>,
     pub tool_results: Vec<ToolResult>,
     pub terminated: bool,
     pub extras: HashMap<String, Value>,
+}
+
+impl Context {
+    pub fn new(session_id: &str, workspace_path: &str) -> Self {
+        Context {
+            session_id: session_id.to_string(),
+            workspace_path: workspace_path.to_string(),
+            trace_id: uuid::Uuid::new_v4().to_string(),
+            messages: Vec::new(),
+            tool_calls: Vec::new(),
+            tool_results: Vec::new(),
+            terminated: false,
+            extras: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

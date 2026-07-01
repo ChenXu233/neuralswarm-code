@@ -1,125 +1,85 @@
-# NeuralSwarm Docker Compose
-# 按需部署：docker compose --profile <profile> up -d
+# NeuralSwarm v2.0 Docker Compose
 #
-# 环境变量：从项目根目录 .env 读取
+# 神经元节点部署：
+#   user-neuron    → 内核 + UI，对外提供 Web 界面
+#   compute-neuron → 仅内核，无 UI，纯计算节点
 #
-# Profiles:
-#   infra  — PostgreSQL + Redis（基础架构）
-#   server — FastAPI 服务器（依赖 infra）
-#   dev    — 开发工具：Adminer + Redis Commander
-#
-# 示例：
-#   只部署基础设施：  docker compose --profile infra up -d
-#   部署基础设施+服务：docker compose --profile server up -d
-#   开发模式（全部）： docker compose --profile dev up -d
-#   一键全部部署：    docker compose --profile infra --profile server --profile dev up -d
+# 用法：
+#   启动用户神经元：     docker compose up -d user-neuron
+#   启动计算神经元：     docker compose up -d compute-neuron
+#   开发模式（前端热更）：docker compose --profile dev up -d
 
 name: neuralswarm
 
 services:
-  # ── 基础设施 ──────────────────────────────────
-
-  postgres:
-    image: postgres:17-alpine
-    profiles: ["infra"]
-    env_file: ../.env
-    environment:
-      POSTGRES_USER: ${NS_DB_USER:-neuralswarm}
-      POSTGRES_PASSWORD: ${NS_DB_PASSWORD:-neuralswarm}
-      POSTGRES_DB: ${NS_DB_NAME:-neuralswarm}
-    ports:
-      - "${NS_DB_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${NS_DB_USER:-neuralswarm}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    profiles: ["infra"]
-    env_file: ../.env
-    command: >
-      sh -c 'if [ -n "$NS_REDIS_PASSWORD" ]; then
-        redis-server --requirepass "$NS_REDIS_PASSWORD";
-      else
-        redis-server;
-      fi'
-    ports:
-      - "${NS_REDIS_PORT:-6380}:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # ── 服务器 ────────────────────────────────────
-
-  server:
+  # ── 用户神经元 ──────────────────────────────
+  # 内核 + 内置 UI，浏览器访问 http://host:8000
+  user-neuron:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.server
-    profiles: ["server"]
-    env_file: ../.env
+      dockerfile: docker/Dockerfile
+      target: user
+    ports:
+      - "${NS_PORT:-8000}:8000"
     environment:
-      NS_DATABASE_URL: postgresql+asyncpg://${NS_DB_USER:-neuralswarm}:${NS_DB_PASSWORD:-neuralswarm}@postgres:5432/${NS_DB_NAME:-neuralswarm}
-      NS_REDIS_URL: redis://${NS_REDIS_PASSWORD:-""}@redis:6379/0
-      NS_HOST: "0.0.0.0"
-      NS_PORT: "8000"
-      NS_DEBUG: "${NS_DEBUG:-false}"
-    ports:
-      - "${NS_SERVER_PORT:-8000}:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  # ── 开发工具 ──────────────────────────────────
-
-  adminer:
-    image: adminer:latest
-    profiles: ["dev"]
-    ports:
-      - "${NS_ADMINER_PORT:-8080}:8080"
-    depends_on:
-      - postgres
-    restart: unless-stopped
-
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    profiles: ["dev"]
-    ports:
-      - "${NS_REDIS_COMMANDER_PORT:-8081}:8081"
-    environment:
-      REDIS_HOSTS: "local:redis:6379:0:${NS_REDIS_PASSWORD:-}"
-    depends_on:
-      - redis
-    restart: unless-stopped
-
-  qdrant:
-    image: qdrant/qdrant:v1.12.1
-    profiles: ["infra"]
-    ports:
-      - "${NS_QDRANT_PORT:-6333}:6333"
-      - "${NS_QDRANT_GRPC_PORT:-6334}:6334"
+      NS_PORT: ${NS_PORT:-8000}
+      NS_DATA_DIR: /data
+      NS_UI_DIR: /app/ui
+      NS_LOG: ${NS_LOG:-info}
+      NS_LLM_ENDPOINT: ${NS_LLM_ENDPOINT:-}
+      NS_LLM_API_KEY: ${NS_LLM_API_KEY:-}
+      NS_LLM_MODEL: ${NS_LLM_MODEL:-}
+      # P2P 发现
+      NS_PEER_PORT: ${NS_PEER_PORT:-9090}
+      NS_BOOTSTRAP: ${NS_BOOTSTRAP:-}
     volumes:
-      - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:6333/healthz || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - neuralswarm_data:/data
+    restart: unless-stopped
+
+  # ── 计算神经元 ──────────────────────────────
+  # 仅内核，无 UI，适合做 GPU 计算节点或远程执行节点
+  compute-neuron:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: compute
+    ports:
+      - "${NS_COMPUTE_PORT:-8001}:8000"
+    environment:
+      NS_PORT: 8000
+      NS_DATA_DIR: /data
+      NS_LOG: ${NS_LOG:-info}
+      NS_LLM_ENDPOINT: ${NS_LLM_ENDPOINT:-}
+      NS_LLM_API_KEY: ${NS_LLM_API_KEY:-}
+      NS_LLM_MODEL: ${NS_LLM_MODEL:-}
+      NS_PEER_PORT: ${NS_COMPUTE_PEER_PORT:-9091}
+      NS_BOOTSTRAP: ${NS_BOOTSTRAP:-}
+    volumes:
+      - neuralswarm_compute_data:/data
+    restart: unless-stopped
+
+  # ── 开发模式 ────────────────────────────────
+  # 内核在容器中，前端在宿主机通过 Vite 热重载
+  kernel-dev:
+    profiles: ["dev"]
+    image: rust:1.80-alpine
+    working_dir: /app
+    ports:
+      - "${NS_PORT:-8000}:8000"
+    environment:
+      NS_PORT: 8000
+      NS_DATA_DIR: /data
+      NS_LOG: debug
+    volumes:
+      - ../kernel:/app
+      - neuralswarm_dev_data:/data
+    command: >
+      sh -c "apk add --no-cache musl-dev protobuf-dev &&
+             cargo install cargo-watch 2>/dev/null &&
+             cargo watch -x run"
     restart: unless-stopped
 
 volumes:
-  postgres_data:
-  redis_data:
-  qdrant_data:
+  neuralswarm_data:
+  neuralswarm_compute_data:
+  neuralswarm_dev_data:

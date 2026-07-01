@@ -15,7 +15,7 @@ struct Args {
     #[arg(long, default_value = "neuralswarm.yaml")]
     config_file: String,
 
-    /// 项目路径（覆盖配置文件）
+    /// 项目路径（覆盖配置文件，可选）
     #[arg(default_value = ".")]
     path: String,
 
@@ -38,41 +38,31 @@ async fn main() -> anyhow::Result<()> {
     }
     config::init(cfg);
 
-    // 3. 初始化工作区
-    let project_path = std::path::PathBuf::from(&args.path);
-    let mut workspace = kernel::workspace::Workspace::new();
-    workspace.mount("project", project_path);
-    if let Some(ref ws_cfg) = config::get().workspace {
-        if let Some(ref mounts) = ws_cfg.mounts {
-            for m in mounts {
-                if m.name != "project" {
-                    workspace.mount(&m.name, m.path.clone());
-                }
-            }
-        }
-    }
-
-    // 4. 初始化存储
+    // 3. 初始化存储
     let store = storage::session_store::SessionStore::new("data/neuralswarm.db")?;
     tracing::info!("Storage initialized (data/neuralswarm.db)");
 
-    // 5. 初始化注册表
+    // 4. 初始化注册表
     let mut registry = kernel::registry::Registry::new();
 
-    // 6. 注册所有内置插件
+    // 5. 注册所有内置插件
     plugins::register_all(&mut registry);
 
-    // 7. 创建管道引擎
+    // 6. 创建管道引擎
     let pipeline = Arc::new(kernel::pipeline::Pipeline::new(registry));
 
-    // 8. 为 LLM handler 注入 pipeline 引用
+    // 7. 为 LLM handler 注入 pipeline 引用
     plugins::llm::set_pipeline(pipeline.clone());
+
+    // 8. 创建 WSS 管理器
+    let wss_manager = Arc::new(server::ws::WssManager::new());
 
     // 9. 启动 HTTP 服务
     let state = Arc::new(server::AppState {
         pipeline,
-        workspace,
         store,
+        wss_manager,
+        default_workspace_path: args.path,
     });
 
     let cors = CorsLayer::permissive();

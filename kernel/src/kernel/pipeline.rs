@@ -68,6 +68,7 @@ mod tests {
         let pipeline = Pipeline::new(reg);
         let ctx = Context {
             session_id: "test".into(),
+            workspace_path: ".".into(),
             trace_id: "test".into(),
             messages: vec![],
             tool_calls: vec![],
@@ -100,6 +101,7 @@ mod tests {
         let pipeline = Pipeline::new(reg);
         let ctx = Context {
             session_id: "test".into(),
+            workspace_path: ".".into(),
             trace_id: "test".into(),
             messages: vec![],
             tool_calls: vec![],

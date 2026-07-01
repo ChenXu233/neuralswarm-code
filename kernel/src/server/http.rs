@@ -27,11 +27,9 @@ async fn create_session(
     State(state): State<Arc<AppState>>,
 ) -> Json<serde_json::Value> {
     let id = uuid::Uuid::new_v4().to_string();
-    let ws_path = state.workspace.first_mount_path()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|_| ".".to_string());
+    let ws_path = &state.default_workspace_path;
 
-    match state.store.create_session(&id, &ws_path) {
+    match state.store.create_session(&id, ws_path) {
         Ok(()) => Json(serde_json::json!({"session_id": id})),
         Err(e) => Json(serde_json::json!({"error": e.to_string()})),
     }
@@ -128,6 +126,7 @@ async fn send_message(
 
     let ctx = Context {
         session_id: session_id.clone(),
+        workspace_path: _session.workspace_path.clone(),
         trace_id,
         messages,
         tool_calls: vec![],
