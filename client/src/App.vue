@@ -10,6 +10,7 @@ import { useTask } from './composables/useTask'
 import { listProjects, type Project, type Task } from './api/client'
 import { useI18n } from 'vue-i18n'
 import ServerSetupDialog from './components/ServerSetupDialog.vue'
+import PluginSlot from './core/plugin-slot.vue'
 import { useServerConnection } from './composables/useServerConnection'
 
 useI18n()
@@ -110,6 +111,9 @@ loadProjects()
 
     <!-- Settings overlay -->
     <SettingsPanel v-if="showSettings" @close="showSettings = false" />
+
+    <!-- Dialog slot -->
+    <PluginSlot name="dialog" />
   </div>
 </template>
 
