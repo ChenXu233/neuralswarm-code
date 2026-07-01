@@ -3,17 +3,14 @@ import { ref } from 'vue'
 import { useTheme } from './composables/useTheme'
 import ActivityBar from './components/layout/ActivityBar.vue'
 import Sidebar from './components/layout/Sidebar.vue'
-import ChatPanel from './components/sidebar/ChatPanel.vue'
-import FilesPanel from './components/sidebar/FilesPanel.vue'
-import PluginsPanel from './components/sidebar/PluginsPanel.vue'
-import SettingsPanel from './components/sidebar/SettingsPanel.vue'
-import MemoryPanel from './components/sidebar/MemoryPanel.vue'
+import { SettingsPanel } from './components/sidebar/SettingsPanel.ts'
 import HomePage from './components/HomePage.vue'
 import TaskView from './views/TaskView.vue'
 import { useTask } from './composables/useTask'
 import { listProjects, type Project, type Task } from './api/client'
 import { useI18n } from 'vue-i18n'
 import ServerSetupDialog from './components/ServerSetupDialog.vue'
+import PluginSlot from './core/plugin-slot.vue'
 import { useServerConnection } from './composables/useServerConnection'
 
 useI18n()
@@ -21,7 +18,7 @@ useTheme()
 
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
-const activePanel = ref<'chat' | 'files' | 'plugins' | 'memory' | null>('chat')
+const activePanel = ref<string | null>('chat')
 const showSettings = ref(false)
 
 const { tasks, currentTask, loadTasks } = useTask()
@@ -91,18 +88,13 @@ loadProjects()
     <!-- Sidebar: visible when a panel is active and settings is closed -->
     <Sidebar
       v-if="activePanel && !showSettings"
-      :title="activePanel === 'chat' ? $t('sidebar.chat') : activePanel === 'files' ? $t('sidebar.files') : activePanel === 'plugins' ? $t('sidebar.plugins') : $t('sidebar.memory')"
-    >
-      <ChatPanel
-        v-if="activePanel === 'chat'"
-        :tasks="tasks"
-        :active-task-id="currentTask?.id"
-        @select="handleSelectTask"
-      />
-      <FilesPanel v-else-if="activePanel === 'files'" :has-open-project="!!selectedProject" />
-      <PluginsPanel v-else-if="activePanel === 'plugins'" />
-      <MemoryPanel v-else-if="activePanel === 'memory'" :project-id="selectedProject?.id || ''" />
-    </Sidebar>
+      :panel-id="activePanel"
+      :tasks="tasks"
+      :active-task-id="currentTask?.id"
+      :has-open-project="!!selectedProject"
+      :project-id="selectedProject?.id || ''"
+      @select="handleSelectTask"
+    />
 
     <div class="app-content">
       <HomePage
@@ -119,6 +111,9 @@ loadProjects()
 
     <!-- Settings overlay -->
     <SettingsPanel v-if="showSettings" @close="showSettings = false" />
+
+    <!-- Dialog slot -->
+    <PluginSlot name="dialog" />
   </div>
 </template>
 

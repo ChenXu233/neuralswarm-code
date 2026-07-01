@@ -1,0 +1,2 @@
+/* Tailwind utility 层——只启用 utilities，不用 base（避免 preflight 冲突） */
+@tailwind utilities;

@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getMemory } from '../../api/client'
+import { getMemory } from '@/api/client'
 
 const props = defineProps<{
   projectId: string

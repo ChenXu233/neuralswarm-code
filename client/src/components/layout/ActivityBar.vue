@@ -1,22 +1,26 @@
 <script setup lang="ts">
-import { MessageSquare, Folder, Puzzle, Settings, Database } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { getSlotRegistrations } from '@/core/plugin-registry'
+import type { SlotRegistration } from '@/core/types'
 
 const props = defineProps<{
-  activePanel: 'chat' | 'files' | 'plugins' | 'memory' | null
+  activePanel: string | null
   showSettings: boolean
 }>()
 
 const emit = defineEmits<{
-  'update:activePanel': [panel: 'chat' | 'files' | 'plugins' | 'memory' | null]
+  'update:activePanel': [panel: string | null]
   'toggleSettings': []
 }>()
 
-function handleClick(panel: 'chat' | 'files' | 'plugins' | 'memory') {
-  // Close settings if open when switching panels
+const actions = computed(() => getSlotRegistrations('activity:action'))
+const settingsActions = computed(() => getSlotRegistrations('activity:settings'))
+
+function handlePanelClick(reg: SlotRegistration) {
   if (props.showSettings) {
     emit('toggleSettings')
   }
-  emit('update:activePanel', props.activePanel === panel ? null : panel)
+  emit('update:activePanel', props.activePanel === reg.panelId ? null : (reg.panelId ?? null))
 }
 
 function handleSettingsClick() {
@@ -30,42 +34,27 @@ function handleSettingsClick() {
 
     <div class="top-icons">
       <button
-        :class="['activity-btn', { active: activePanel === 'chat' && !showSettings }]"
-        :title="$t('activity.chat')"
-        @click="handleClick('chat')"
+        v-for="reg in actions"
+        :key="reg.id"
+        :class="['activity-btn', {
+          active: activePanel === reg.panelId && !showSettings
+        }]"
+        :title="reg.panelLabel ?? reg.id"
+        @click="handlePanelClick(reg)"
       >
-        <MessageSquare />
-      </button>
-      <button
-        :class="['activity-btn', { active: activePanel === 'files' && !showSettings }]"
-        :title="$t('activity.files')"
-        @click="handleClick('files')"
-      >
-        <Folder />
-      </button>
-      <button
-        :class="['activity-btn', { active: activePanel === 'plugins' && !showSettings }]"
-        :title="$t('activity.plugins')"
-        @click="handleClick('plugins')"
-      >
-        <Puzzle />
-      </button>
-      <button
-        :class="['activity-btn', { active: activePanel === 'memory' && !showSettings }]"
-        :title="$t('activity.memory')"
-        @click="handleClick('memory')"
-      >
-        <Database />
+        <component :is="reg.icon" />
       </button>
     </div>
 
     <div class="bottom-icons">
       <button
+        v-for="reg in settingsActions"
+        :key="reg.id"
         :class="['activity-btn', { active: showSettings }]"
-        :title="$t('activity.settings')"
+        :title="reg.id"
         @click="handleSettingsClick"
       >
-        <Settings />
+        <component :is="reg.icon" />
         <span class="connection-dot"></span>
       </button>
     </div>

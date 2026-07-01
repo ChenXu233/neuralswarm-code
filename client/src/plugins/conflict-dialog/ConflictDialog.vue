@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Conflict } from '../types/scheduler'
+import type { Conflict } from '@/types/scheduler'
 
 defineProps<{
   conflict: Conflict | null

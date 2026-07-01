@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { X, Server, Palette, Globe, Monitor } from 'lucide-vue-next'
-import StatusDot from '../ui/StatusDot.vue'
-import { useTheme } from '../../composables/useTheme'
-import { useServerConnection } from '../../composables/useServerConnection'
-import { useLocale } from '../../composables/useLocale'
-import type { Theme } from '../../composables/useTheme'
+import StatusDot from '@/components/ui/StatusDot.vue'
+import { useTheme } from '@/composables/useTheme'
+import { useServerConnection } from '@/composables/useServerConnection'
+import { useLocale } from '@/composables/useLocale'
+import type { Theme } from '@/composables/useTheme'
 
 const emit = defineEmits<{ close: [] }>()
 
