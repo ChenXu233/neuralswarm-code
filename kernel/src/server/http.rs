@@ -15,6 +15,7 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/api/health", get(health))
         .route("/api/sessions", get(list_sessions).post(create_session))
         .route("/api/sessions/:id/messages", get(get_session_messages).post(send_message))
+        .route("/api/workspaces", get(list_workspaces))
 }
 
 async fn health() -> &'static str {
@@ -187,6 +188,26 @@ async fn get_session_messages(
                 })
             }).collect();
             Json(serde_json::json!({"messages": items}))
+        }
+        Err(e) => Json(serde_json::json!({"error": e.to_string()})),
+    }
+}
+
+// ── Workspaces ─────────────────────────────────────────────
+
+async fn list_workspaces(
+    State(state): State<Arc<AppState>>,
+) -> Json<serde_json::Value> {
+    match state.store.list_workspaces() {
+        Ok(workspaces) => {
+            let items: Vec<serde_json::Value> = workspaces.into_iter().map(|w| {
+                serde_json::json!({
+                    "path": w.path,
+                    "last_active": w.last_active,
+                    "session_count": w.session_count,
+                })
+            }).collect();
+            Json(serde_json::json!({"workspaces": items}))
         }
         Err(e) => Json(serde_json::json!({"error": e.to_string()})),
     }

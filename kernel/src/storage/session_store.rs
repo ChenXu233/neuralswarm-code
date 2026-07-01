@@ -19,6 +19,13 @@ pub struct SessionRecord {
     pub message_count: i64,
 }
 
+#[derive(Debug, Clone)]
+pub struct WorkspaceInfo {
+    pub path: String,
+    pub last_active: String,
+    pub session_count: i64,
+}
+
 /// SQLite 会话存储。线程安全，内部用 Mutex。
 pub struct SessionStore {
     conn: Mutex<Connection>,
@@ -192,6 +199,31 @@ impl SessionStore {
         conn.execute("DELETE FROM sessions WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
+
+    /// 按 workspace_path 聚合，返回去重的工作区列表。
+    pub fn list_workspaces(&self) -> anyhow::Result<Vec<WorkspaceInfo>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT workspace_path, MAX(updated_at) as last_active, COUNT(*) as session_count
+             FROM sessions
+             GROUP BY workspace_path
+             ORDER BY last_active DESC"
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            Ok(WorkspaceInfo {
+                path: row.get(0)?,
+                last_active: row.get(1)?,
+                session_count: row.get(2)?,
+            })
+        })?;
+
+        let mut result = Vec::new();
+        for row in rows {
+            result.push(row?);
+        }
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -257,5 +289,19 @@ mod tests {
         let store = SessionStore::new(":memory:").unwrap();
         let session = store.get_session("nonexistent").unwrap();
         assert!(session.is_none());
+    }
+
+    #[test]
+    fn test_list_workspaces() {
+        let store = SessionStore::new(":memory:").unwrap();
+        store.create_session("s1", "/home/user/proj-a").unwrap();
+        store.create_session("s2", "/home/user/proj-a").unwrap();
+        store.create_session("s3", "/home/user/proj-b").unwrap();
+        let ws = store.list_workspaces().unwrap();
+        assert_eq!(ws.len(), 2);
+        assert_eq!(
+            ws.iter().find(|w| w.path == "/home/user/proj-a").unwrap().session_count,
+            2
+        );
     }
 }
