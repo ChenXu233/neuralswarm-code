@@ -67,6 +67,7 @@ async fn main() -> anyhow::Result<()> {
 
     let cors = CorsLayer::permissive();
     let app = server::http::routes()
+        .merge(server::ws::ws_routes())
         .with_state(state)
         .layer(cors);
     let port = config::get().node.as_ref()
