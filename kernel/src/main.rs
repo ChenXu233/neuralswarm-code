@@ -6,6 +6,7 @@ mod storage;
 
 use std::sync::Arc;
 use clap::Parser;
+use tower_http::cors::CorsLayer;
 
 #[derive(Parser)]
 #[command(name = "neuralswarm")]
@@ -74,7 +75,10 @@ async fn main() -> anyhow::Result<()> {
         store,
     });
 
-    let app = server::http::routes().with_state(state);
+    let cors = CorsLayer::permissive();
+    let app = server::http::routes()
+        .with_state(state)
+        .layer(cors);
     let port = config::get().node.as_ref()
         .and_then(|n| n.port)
         .unwrap_or(8080);
