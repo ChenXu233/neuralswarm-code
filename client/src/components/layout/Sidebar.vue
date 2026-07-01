@@ -5,6 +5,7 @@ import type { SlotRegistration } from '@/core/types'
 
 const props = defineProps<{
   panelId: string | null
+  title?: string
 }>()
 
 const panels = computed(() => getSlotRegistrations('sidebar:panel'))
@@ -12,16 +13,23 @@ const panels = computed(() => getSlotRegistrations('sidebar:panel'))
 const activePanel = computed<SlotRegistration | undefined>(() =>
   panels.value.find(p => p.panelId === props.panelId),
 )
+
+const panelTitle = computed(() => {
+  if (props.title) return props.title
+  return activePanel.value?.panelLabel ?? activePanel.value?.id ?? ''
+})
 </script>
 
 <template>
-  <div v-if="activePanel" class="sidebar">
+  <div v-if="panelId" class="sidebar">
     <div class="sidebar-header">
-      <span class="sidebar-title">{{ activePanel.panelLabel ?? activePanel.id }}</span>
+      <span class="sidebar-title">{{ panelTitle }}</span>
       <slot name="header-actions" />
     </div>
     <div class="sidebar-content">
-      <component :is="activePanel.component" v-bind="$attrs" />
+      <slot>
+        <component :is="activePanel?.component" v-bind="$attrs" />
+      </slot>
     </div>
   </div>
 </template>

@@ -1,34 +1,27 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Folder, Plus, MessageSquare, ArrowLeft, Globe } from 'lucide-vue-next'
-import type { Project } from '../api/client'
+import type { WorkspaceInfo } from '../api/client'
 import { canOpenLocalFolder } from '../utils/platform'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+useI18n()
 
 defineProps<{
-  projects: Project[]
+  workspaces: WorkspaceInfo[]
 }>()
 
 const emit = defineEmits<{
-  select: [project: Project]
+  select: [path: string]
   global: []
 }>()
 
 const showOptions = ref(false)
 
-function formatTime(dateStr: string) {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(hours / 24)
-
-  if (hours < 1) return t('home.justNow')
-  if (hours < 24) return t('home.hoursAgo', { n: hours })
-  return t('home.daysAgo', { n: days })
+function workspaceName(path: string) {
+  return path.split(/[/\\]/).filter(Boolean).pop() || path
 }
+
 </script>
 
 <template>
@@ -47,21 +40,21 @@ function formatTime(dateStr: string) {
       <!-- Right: Content -->
       <div class="action-section">
         <Transition name="slide-fade" mode="out-in">
-          <!-- Projects list -->
+          <!-- Workspace list -->
           <div v-if="!showOptions" key="projects" class="projects-content">
             <div class="section-label">{{ $t('home.recent') }}</div>
             <div class="project-list">
               <div
-                v-for="project in projects"
-                :key="project.id"
+                v-for="ws in workspaces"
+                :key="ws.path"
                 class="project-item"
-                @click="emit('select', project)"
+                @click="emit('select', ws.path)"
               >
                 <Folder />
-                <span class="project-path">{{ project.name }}</span>
-                <span class="project-time">{{ formatTime(project.updated_at) }}</span>
+                <span class="project-path">{{ workspaceName(ws.path) }}</span>
+                <span class="project-meta">{{ ws.session_count }} 对话</span>
               </div>
-              <div v-if="projects.length === 0" class="empty-hint">
+              <div v-if="workspaces.length === 0" class="empty-hint">
                 {{ $t('home.noRecentProjects') }}
               </div>
             </div>
@@ -226,6 +219,12 @@ function formatTime(dateStr: string) {
 .project-time {
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
+}
+
+.project-meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-left: auto;
 }
 
 .empty-hint {

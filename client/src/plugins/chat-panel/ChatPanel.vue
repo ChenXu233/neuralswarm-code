@@ -1,26 +1,16 @@
 <script setup lang="ts">
 import { Search, Plus } from 'lucide-vue-next'
-import StatusDot from '@/components/ui/StatusDot.vue'
-import type { Task } from '@/api/client'
+import type { Session } from '@/api/client'
 
 defineProps<{
-  tasks: Task[]
-  activeTaskId?: string
+  sessions: Session[]
+  activeSessionId?: string
 }>()
 
 defineEmits<{
-  select: [task: Task]
-  create: []
+  select: [session: Session]
+  'new-session': []
 }>()
-
-function getStatusVariant(status: string) {
-  switch (status) {
-    case 'running': return 'running'
-    case 'completed': return 'completed'
-    case 'failed': return 'failed'
-    default: return 'pending'
-  }
-}
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr)
@@ -41,7 +31,7 @@ function formatTime(dateStr: string): string {
     <!-- Header: title + add button -->
     <div class="panel-header">
       <span class="panel-title">{{ $t('chat.tasks') }}</span>
-      <button class="add-btn" @click="$emit('create')">
+      <button class="add-btn" @click="$emit('new-session')">
         <Plus />
       </button>
     </div>
@@ -52,21 +42,20 @@ function formatTime(dateStr: string): string {
       <input :placeholder="$t('chat.filterTasks')" />
     </div>
 
-    <!-- Task list -->
+    <!-- Session list -->
     <div class="task-list">
       <div
-        v-for="task in tasks"
-        :key="task.id"
-        :class="['task-item', { active: task.id === activeTaskId }]"
-        @click="$emit('select', task)"
+        v-for="session in sessions"
+        :key="session.id"
+        :class="['task-item', { active: session.id === activeSessionId }]"
+        @click="$emit('select', session)"
       >
         <div class="task-header">
-          <StatusDot :status="getStatusVariant(task.status)" />
-          <span class="task-title">{{ task.input.slice(0, 40) }}</span>
+          <span class="task-title">{{ session.id.slice(0, 8) }}...</span>
         </div>
         <div class="task-meta">
-          <span class="task-status">{{ task.status }}</span>
-          <span class="task-time">{{ formatTime(task.created_at) }}</span>
+          <span class="task-status">{{ session.message_count }} 条消息</span>
+          <span class="task-time">{{ formatTime(session.created_at) }}</span>
         </div>
       </div>
     </div>
