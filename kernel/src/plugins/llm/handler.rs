@@ -5,12 +5,24 @@ use serde_json::Value;
 use crate::kernel::handler::Handler;
 use crate::kernel::context::{Context, Message, ToolCall};
 use crate::kernel::pipeline::Pipeline;
+use crate::server::ws::WssManager;
 
 static PIPELINE: OnceLock<Arc<Pipeline>> = OnceLock::new();
+static WSS_MANAGER: OnceLock<Arc<WssManager>> = OnceLock::new();
 
 pub fn set_pipeline(pipeline: Arc<Pipeline>) {
     if PIPELINE.set(pipeline).is_err() {
         // Already set — safe to ignore
+    }
+}
+
+pub fn set_wss_manager(manager: Arc<WssManager>) {
+    let _ = WSS_MANAGER.set(manager);
+}
+
+fn push_ws(session_id: &str, event: serde_json::Value) {
+    if let Some(manager) = WSS_MANAGER.get() {
+        manager.push(session_id, event.to_string());
     }
 }
 
@@ -78,6 +90,12 @@ impl Handler for LLMHandler {
                 "tool_choice": "auto",
             });
 
+            // WS: push stream event before LLM call
+            push_ws(&ctx.session_id, serde_json::json!({
+                "type": "stream",
+                "data": { "content": format!("[iteration {}]\n", _iteration + 1) }
+            }));
+
             // HTTP call
             let url = format!("{}/chat/completions", api_base.trim_end_matches('/'));
             let resp = client.post(&url)
@@ -116,6 +134,10 @@ impl Handler for LLMHandler {
 
             if tool_calls.is_empty() {
                 // LLM text response done
+                push_ws(&ctx.session_id, serde_json::json!({
+                    "type": "message",
+                    "data": { "content": content }
+                }));
                 ctx.messages.push(Message {
                     role: "assistant".into(),
                     content: content.clone(),
@@ -151,6 +173,17 @@ impl Handler for LLMHandler {
 
             // Execute each tool call through pipeline
             for tc in &tool_calls {
+                // WS: push tool_call event
+                push_ws(&ctx.session_id, serde_json::json!({
+                    "type": "tool_call",
+                    "data": {
+                        "id": tc.id,
+                        "tool": tc.name,
+                        "args": tc.arguments,
+                        "status": "running"
+                    }
+                }));
+
                 let tool_point = format!("tool:{}", tc.name);
 
                 let tool_ctx = Context {
@@ -178,6 +211,17 @@ impl Handler for LLMHandler {
                     }
                     Err(e) => format!("Error: {}", e),
                 };
+
+                // WS: push tool_result event
+                push_ws(&ctx.session_id, serde_json::json!({
+                    "type": "tool_result",
+                    "data": {
+                        "id": tc.id,
+                        "tool": tc.name,
+                        "output": result.clone(),
+                        "error": null
+                    }
+                }));
 
                 // Add to ctx.messages
                 ctx.messages.push(Message {
