@@ -112,7 +112,10 @@ impl Registry {
             .collect();
 
         let mut sorted = Vec::new();
-        while let Some(i) = queue.pop() {
+        let mut idx = 0;
+        while idx < queue.len() {
+            let i = queue[idx];
+            idx += 1;
             sorted.push(i);
             for &j in &adj[i] {
                 in_degree[j] -= 1;
