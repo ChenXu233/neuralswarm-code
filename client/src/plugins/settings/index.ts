@@ -7,6 +7,7 @@ registerPlugin({
   slots: {
     'activity:settings': {
       component: SettingsAction,
+      icon: SettingsAction,
       priority: 10,
     },
   },

@@ -8,6 +8,7 @@ registerPlugin({
   slots: {
     'activity:action': {
       component: FileTreeAction,
+      icon: FileTreeAction,
       priority: 20,
       panelId: 'files',
     },

@@ -21,7 +21,7 @@ useTheme()
 
 const selectedProject = ref<Project | null>(null)
 const projects = ref<Project[]>([])
-const activePanel = ref<'chat' | 'files' | 'plugins' | 'memory' | null>('chat')
+const activePanel = ref<string | null>('chat')
 const showSettings = ref(false)
 
 const { tasks, currentTask, loadTasks } = useTask()

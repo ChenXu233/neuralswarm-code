@@ -8,6 +8,7 @@ registerPlugin({
   slots: {
     'activity:action': {
       component: MemoryAction,
+      icon: MemoryAction,
       priority: 40,
       panelId: 'memory',
     },

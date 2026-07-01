@@ -8,6 +8,7 @@ registerPlugin({
   slots: {
     'activity:action': {
       component: PluginsAction,
+      icon: PluginsAction,
       priority: 30,
       panelId: 'plugins',
     },

@@ -8,6 +8,7 @@ registerPlugin({
   slots: {
     'activity:action': {
       component: ChatAction,
+      icon: ChatAction,
       priority: 10,
       panelId: 'chat',
     },
