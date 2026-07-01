@@ -63,8 +63,15 @@ async fn send_message(
         extras: std::collections::HashMap::new(),
     };
 
-    match state.pipeline.invoke("user-message", ctx).await {
-        Ok(_ctx) => Json(serde_json::json!({"status": "ok"})),
+    match state.pipeline.invoke("llm-prompt", ctx).await {
+        Ok(ctx) => {
+            // 返回最后一条 assistant 消息的内容
+            let last = ctx.messages.iter().rev()
+                .find(|m| m.role == "assistant")
+                .map(|m| m.content.clone())
+                .unwrap_or_default();
+            Json(serde_json::json!({"status": "ok", "response": last, "messages": ctx.messages.len()}))
+        },
         Err(e) => Json(serde_json::json!({"error": e.to_string()})),
     }
 }

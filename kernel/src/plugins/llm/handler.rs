@@ -147,10 +147,15 @@ impl Handler for LLMHandler {
             let message = &choice["message"];
             let content = message["content"].as_str().unwrap_or("").to_string();
             let tool_calls = message["tool_calls"].as_array()
-                .map(|arr| arr.iter().map(|tc| ToolCall {
-                    id: tc["id"].as_str().unwrap_or("").to_string(),
-                    name: tc["function"]["name"].as_str().unwrap_or("").to_string(),
-                    arguments: tc["function"]["arguments"].clone(),
+                .map(|arr| arr.iter().map(|tc| {
+                    // OpenAI API 的 arguments 是 JSON 字符串，需要解析成对象
+                    let args_str = tc["function"]["arguments"].as_str().unwrap_or("{}");
+                    let args: Value = serde_json::from_str(args_str).unwrap_or(Value::Object(Default::default()));
+                    ToolCall {
+                        id: tc["id"].as_str().unwrap_or("").to_string(),
+                        name: tc["function"]["name"].as_str().unwrap_or("").to_string(),
+                        arguments: args,
+                    }
                 }).collect::<Vec<_>>())
                 .unwrap_or_default();
 
