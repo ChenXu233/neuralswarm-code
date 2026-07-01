@@ -23,12 +23,11 @@ pub struct LLMHandler;
 #[async_trait]
 impl Handler for LLMHandler {
     async fn invoke(&self, mut ctx: Context) -> anyhow::Result<Context> {
-        let api_base = std::env::var("LLM_API_BASE")
-            .unwrap_or_else(|_| "https://api.openai.com/v1".into());
-        let api_key = std::env::var("LLM_API_KEY")
-            .unwrap_or_default();
-        let model = std::env::var("LLM_MODEL")
-            .unwrap_or_else(|_| "gpt-4o-mini".into());
+        let llm_cfg = crate::config::get().llm_resolved();
+        let api_base = llm_cfg.api_base.unwrap_or_else(|| "https://api.openai.com/v1".into());
+        let api_key = llm_cfg.api_key.unwrap_or_default();
+        let model = llm_cfg.model.unwrap_or_else(|| "gpt-4o-mini".into());
+        let max_iterations = llm_cfg.max_iterations.unwrap_or(25);
 
         let client = reqwest::Client::new();
 
@@ -56,8 +55,18 @@ impl Handler for LLMHandler {
             msg
         }).collect();
 
-        // Agent loop
-        loop {
+        // 如果有 system_prompt 配置，插入到消息列表开头
+        if let Some(ref sp) = llm_cfg.system_prompt {
+            if !openai_messages.iter().any(|m| m["role"] == "system") {
+                openai_messages.insert(0, serde_json::json!({
+                    "role": "system",
+                    "content": sp,
+                }));
+            }
+        }
+
+        // Agent loop — 最多 max_iterations 轮
+        for _iteration in 0..max_iterations {
             // Tool schemas for LLM
             let tools = vec![
                 serde_json::json!({
@@ -153,7 +162,7 @@ impl Handler for LLMHandler {
                     tool_calls: None,
                     tool_call_id: None,
                 });
-                break;
+                return Ok(ctx);
             }
 
             // Add assistant message with tool calls to ctx
@@ -228,6 +237,7 @@ impl Handler for LLMHandler {
             // Loop continues: send updated messages back to LLM
         }
 
-        Ok(ctx)
+        // 循环耗尽，未得到文本回复
+        Err(anyhow::anyhow!("LLM agent loop exceeded max iterations ({})", max_iterations))
     }
 }
