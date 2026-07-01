@@ -67,53 +67,8 @@ impl Handler for LLMHandler {
 
         // Agent loop — 最多 max_iterations 轮
         for _iteration in 0..max_iterations {
-            // Tool schemas for LLM
-            let tools = vec![
-                serde_json::json!({
-                    "type": "function",
-                    "function": {
-                        "name": "file_read",
-                        "description": "Read file content from the workspace",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "path": {"type": "string", "description": "File path"}
-                            },
-                            "required": ["path"]
-                        }
-                    }
-                }),
-                serde_json::json!({
-                    "type": "function",
-                    "function": {
-                        "name": "file_write",
-                        "description": "Write content to a file in the workspace",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "path": {"type": "string", "description": "File path"},
-                                "content": {"type": "string", "description": "Content to write"}
-                            },
-                            "required": ["path", "content"]
-                        }
-                    }
-                }),
-                serde_json::json!({
-                    "type": "function",
-                    "function": {
-                        "name": "shell",
-                        "description": "Execute a shell command",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "command": {"type": "string", "description": "Command to run"},
-                                "timeout": {"type": "integer", "description": "Timeout in seconds"}
-                            },
-                            "required": ["command"]
-                        }
-                    }
-                }),
-            ];
+            // Tool schemas for LLM — dynamically fetched from Registry
+            let tools = get_pipeline().registry_ref().get_tool_schemas();
 
             // Build request body
             let body = serde_json::json!({

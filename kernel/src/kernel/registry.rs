@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use anyhow::{Result, anyhow};
+use serde_json::Value;
 use crate::kernel::handler::Handler;
 
 /// MVP 固定词汇表
@@ -133,6 +134,40 @@ impl Registry {
         entry.sorted = sorted.iter().map(|&i| entry.registrations[i].handler.clone()).collect();
 
         Ok(())
+    }
+
+    /// 从所有 tool:* 点上的 handler 生成 OpenAI tool schemas。
+    /// MVP 简单实现：每个 tool:* 点生成一个固定格式的 tool schema。
+    pub fn get_tool_schemas(&self) -> Vec<Value> {
+        let mut schemas = Vec::new();
+        for (point_name, _entry) in &self.points {
+            if point_name.starts_with("tool:") {
+                let tool_name = point_name.strip_prefix("tool:").unwrap_or(point_name);
+                let description = match tool_name {
+                    "file_read" => "Read file content from the workspace. Path is relative to workspace mount.",
+                    "file_write" => "Write content to a file in the workspace. Creates parent directories if needed. Path is relative to workspace mount.",
+                    "shell" => "Execute a shell command in the workspace directory.",
+                    _ => "A registered tool.",
+                };
+                schemas.push(serde_json::json!({
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        "description": description,
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "path": {"type": "string", "description": "File path (relative to workspace)"},
+                                "content": {"type": "string", "description": "File content to write"},
+                                "command": {"type": "string", "description": "Shell command to execute"},
+                                "timeout": {"type": "integer", "description": "Timeout in seconds (default 30)"}
+                            }
+                        }
+                    }
+                }));
+            }
+        }
+        schemas
     }
 }
 

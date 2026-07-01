@@ -38,14 +38,25 @@ impl Handler for ShellHandler {
 }
 
 async fn execute_shell(command: &str, timeout_secs: u64) -> Result<String, String> {
+    // 平台兼容的 shell 选择
+    #[cfg(unix)]
+    let shell_program = "sh";
+    #[cfg(unix)]
+    let shell_arg = "-c";
+
+    #[cfg(windows)]
+    let shell_program = "cmd.exe";
+    #[cfg(windows)]
+    let shell_arg = "/C";
+
     let output = tokio::time::timeout(
         Duration::from_secs(timeout_secs),
-        tokio::process::Command::new("sh")
-            .arg("-c")
+        tokio::process::Command::new(shell_program)
+            .arg(shell_arg)
             .arg(command)
             .output(),
     ).await.map_err(|_| "command timed out".to_string())?
-      .map_err(|e| e.to_string())?;
+      .map_err(|e| format!("failed to execute: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);

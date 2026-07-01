@@ -14,6 +14,10 @@ impl Pipeline {
         Pipeline { registry: Arc::new(registry) }
     }
 
+    pub fn registry_ref(&self) -> &Registry {
+        &*self.registry
+    }
+
     /// 让流经过指定点。
     pub async fn invoke(&self, point: &str, mut ctx: Context) -> Result<Context> {
         let handlers = self.registry.get_handlers(point)?.to_vec();
