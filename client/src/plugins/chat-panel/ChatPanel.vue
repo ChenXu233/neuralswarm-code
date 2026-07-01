@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Search, Plus } from 'lucide-vue-next'
-import StatusDot from '../ui/StatusDot.vue'
-import type { Task } from '../../api/client'
+import StatusDot from '@/components/ui/StatusDot.vue'
+import type { Task } from '@/api/client'
 
 defineProps<{
   tasks: Task[]
