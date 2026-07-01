@@ -2,13 +2,47 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, main, 'feature/**']
   pull_request:
-    branches: [master]
+    branches: [master, main]
 
 jobs:
-  # Python 服务器测试
-  server-test:
+  # ── 前端：类型检查 + 单元测试 + 构建 + E2E ──
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx vue-tsc --noEmit
+
+      - name: Unit + Component tests
+        run: npx vitest run --coverage
+
+      - name: Production build
+        run: npm run build
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests (vite preview)
+        run: npx playwright test
+        env:
+          CI: true
+
+  # ── Python 服务器测试（v1.0 遗留，迁移中） ──
+  server:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,31 +66,3 @@ jobs:
         run: |
           cd server
           pytest
-
-  # 客户端构建检查
-  client-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
-
-      - name: Install dependencies
-        run: |
-          cd client
-          npm install
-
-      - name: Type check
-        run: |
-          cd client
-          npx vue-tsc --noEmit
-
-      - name: Build
-        run: |
-          cd client
-          npm run build
