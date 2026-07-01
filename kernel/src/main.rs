@@ -12,7 +12,7 @@ use clap::Parser;
 struct Args {
     /// 配置文件路径
     #[arg(long, default_value = "neuralswarm.yaml")]
-    config: String,
+    config_file: String,
 
     /// 项目路径（覆盖配置文件）
     #[arg(default_value = ".")]
@@ -29,32 +29,31 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     // 1. 加载配置
-    let mut cfg = config::Config::from_file(&args.config)?;
+    let mut cfg = config::Config::from_file(&args.config_file)?;
 
-    // 2. CLI 参数覆盖配置文件
-    let port = args.port
-        .or_else(|| cfg.node.as_ref().and_then(|n| n.port))
-        .unwrap_or(8080);
-
-    // 3. 初始化全局配置，确保 CLI 参数优先
+    // 2. CLI 参数覆盖
     if args.port.is_some() {
         cfg.node.get_or_insert_with(|| config::NodeConfig { name: None, port: None }).port = args.port;
     }
     config::init(cfg);
 
-    // 4. 初始化工作区
+    // 3. 初始化工作区
+    let project_path = std::path::PathBuf::from(&args.path);
     let mut workspace = kernel::workspace::Workspace::new();
-    workspace.mount("project", std::path::PathBuf::from(&args.path));
-    // 如果有配置文件中的 mounts，也加上
+    workspace.mount("project", project_path);
     if let Some(ref ws_cfg) = config::get().workspace {
         if let Some(ref mounts) = ws_cfg.mounts {
             for m in mounts {
-                if m.name != "project" {  // 避免重复
+                if m.name != "project" {
                     workspace.mount(&m.name, m.path.clone());
                 }
             }
         }
     }
+
+    // 4. 初始化存储
+    let store = storage::session_store::SessionStore::new("data/neuralswarm.db")?;
+    tracing::info!("Storage initialized (data/neuralswarm.db)");
 
     // 5. 初始化注册表
     let mut registry = kernel::registry::Registry::new();
@@ -72,13 +71,17 @@ async fn main() -> anyhow::Result<()> {
     let state = Arc::new(server::AppState {
         pipeline,
         workspace,
+        store,
     });
 
     let app = server::http::routes().with_state(state);
+    let port = config::get().node.as_ref()
+        .and_then(|n| n.port)
+        .unwrap_or(8080);
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("NeuralSwarm kernel starting on {}", addr);
-    tracing::info!("Config loaded from: {}", args.config);
+    tracing::info!("Config loaded from: {}", args.config_file);
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
