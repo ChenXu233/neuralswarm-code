@@ -57,6 +57,9 @@ async fn main() -> anyhow::Result<()> {
     // 8. 创建 WSS 管理器
     let wss_manager = Arc::new(server::ws::WssManager::new());
 
+    // 为 LLM handler 注入 WSS 管理器
+    plugins::llm::set_wss_manager(wss_manager.clone());
+
     // 9. 启动 HTTP 服务
     let state = Arc::new(server::AppState {
         pipeline,
