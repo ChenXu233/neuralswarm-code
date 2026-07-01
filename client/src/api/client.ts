@@ -1,16 +1,80 @@
-import { computed } from 'vue'
-import { useServerConnection } from '@/composables/useServerConnection'
-
-const { activeServer } = useServerConnection()
-
-export const API_BASE = computed(() =>
-  activeServer.value?.url || 'http://localhost:8000'
-)
-
-// Helper function to get current API base URL
 function getApiBase(): string {
-  return activeServer.value?.url || 'http://localhost:8000'
+  // 注意：这里不能直接调用 composable，因为 composable 只能在 setup 中调用
+  // 改为在每次调用时从 localStorage 读取
+  const servers = JSON.parse(localStorage.getItem('neuralswarm-servers') || '[]')
+  return servers[0]?.url || 'http://localhost:8080'
 }
+
+// ── Types ──────────────────────────────────────────────
+
+export interface WorkspaceInfo {
+  path: string
+  last_active: string
+  session_count: number
+}
+
+export interface Session {
+  id: string
+  workspace: string
+  created_at: string
+  message_count: number
+}
+
+export interface SessionMessage {
+  role: string
+  content: string
+  tool_calls?: any[]
+  tool_call_id?: string
+}
+
+// ── Workspaces ─────────────────────────────────────────
+
+export async function listWorkspaces(): Promise<WorkspaceInfo[]> {
+  const resp = await fetch(`${getApiBase()}/api/workspaces`)
+  const data = await resp.json()
+  return data.workspaces || []
+}
+
+// ── Sessions ───────────────────────────────────────────
+
+export async function createSession(workspace: string): Promise<{ session_id: string; workspace: string; created_at: string }> {
+  const resp = await fetch(`${getApiBase()}/api/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workspace }),
+  })
+  return await resp.json()
+}
+
+export async function listSessions(workspace?: string): Promise<Session[]> {
+  const url = workspace
+    ? `${getApiBase()}/api/sessions?workspace=${encodeURIComponent(workspace)}`
+    : `${getApiBase()}/api/sessions`
+  const resp = await fetch(url)
+  const data = await resp.json()
+  return data.sessions || []
+}
+
+export async function getSessionMessages(sessionId: string): Promise<SessionMessage[]> {
+  const resp = await fetch(`${getApiBase()}/api/sessions/${sessionId}/messages`)
+  const data = await resp.json()
+  return data.messages || []
+}
+
+export async function sendMessage(sessionId: string, content: string): Promise<{ message_count: number }> {
+  const resp = await fetch(`${getApiBase()}/api/sessions/${sessionId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  })
+  return await resp.json()
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  await fetch(`${getApiBase()}/api/sessions/${sessionId}`, { method: 'DELETE' })
+}
+
+// ── 旧 API 兼容导出（逐步迁移中，新代码请使用上面的 workspace/session API）──
 
 export interface Project {
   id: string
@@ -32,6 +96,22 @@ export interface Task {
   created_at: string
   completed_at: string | null
 }
+
+export interface Agent {
+  id: string
+  project_id: string
+  name: string
+  agent_type: 'scheduler' | 'worker'
+  status: 'idle' | 'planning' | 'running' | 'waiting' | 'completed' | 'failed'
+  task_id: string | null
+  parent_id: string | null
+  llm_config: Record<string, any>
+  worktree_path: string | null
+  created_at: string
+  updated_at: string
+}
+
+export const API_BASE = ''
 
 export async function createProject(name: string, path: string): Promise<Project> {
   const resp = await fetch(`${getApiBase()}/api/projects`, {
@@ -82,22 +162,6 @@ export async function cancelTask(taskId: string): Promise<Task> {
   return data.data
 }
 
-// ── Agent API ─────────────────────────────────────────────────
-
-export interface Agent {
-  id: string
-  project_id: string
-  name: string
-  agent_type: 'scheduler' | 'worker'
-  status: 'idle' | 'planning' | 'running' | 'waiting' | 'completed' | 'failed'
-  task_id: string | null
-  parent_id: string | null
-  llm_config: Record<string, any>
-  worktree_path: string | null
-  created_at: string
-  updated_at: string
-}
-
 export async function listAgents(params?: {
   project_id?: string
   status?: string
@@ -116,45 +180,6 @@ export async function getAgent(agentId: string): Promise<Agent> {
   const data = await resp.json()
   return data.data
 }
-
-// ── Conflict API ──────────────────────────────────────────────
-
-export interface Conflict {
-  id: string
-  task_id: string
-  file_path: string
-  agent_id: string
-  other_agent_id: string
-  old_hash: string
-  current_hash: string
-  current_content: string
-  new_content: string
-  status: 'pending' | 'resolved' | 'timeout'
-  action: 're_read' | 'overwrite' | 'submit_to_scheduler' | null
-  created_at: string
-  resolved_at: string | null
-}
-
-export async function getConflict(conflictId: string): Promise<Conflict> {
-  const resp = await fetch(`${getApiBase()}/api/conflicts/${conflictId}`)
-  const data = await resp.json()
-  return data.data
-}
-
-export async function decideConflict(
-  conflictId: string,
-  action: 're_read' | 'overwrite' | 'submit_to_scheduler'
-): Promise<Conflict> {
-  const resp = await fetch(`${getApiBase()}/api/conflicts/${conflictId}/decide`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action }),
-  })
-  const data = await resp.json()
-  return data.data
-}
-
-// ── Memory API ─────────────────────────────────────────────
 
 export async function getMemory(projectId: string, level: string, limit: number = 100): Promise<any> {
   const response = await fetch(`${getApiBase()}/api/memory/${projectId}?level=${level}&limit=${limit}`)
