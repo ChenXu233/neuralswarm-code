@@ -28,7 +28,7 @@ const emit = defineEmits<{
 const { currentTask, loading, submit } = useTask()
 
 const activeTaskId = computed(() => currentTask.value?.id || '')
-const { events, connected } = useWebSocket(activeTaskId)
+const { events, connected } = useWebSocket(() => activeTaskId.value)
 
 // Agent 状态
 const agents = ref<Agent[]>([])

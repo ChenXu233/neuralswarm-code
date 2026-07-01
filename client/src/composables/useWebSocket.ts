@@ -1,42 +1,44 @@
-import { ref, computed, watch, onUnmounted, type Ref } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
-export interface TaskEvent {
-  type: 'status' | 'tool_call' | 'tool_result' | 'message' | 'error' | 'diff'
-    | 'plan_start' | 'plan_generated' | 'plan_completed'
+export interface WsEvent {
+  type: string
   data: Record<string, any>
-  timestamp: string
+  history?: boolean
   event_id?: string
 }
 
-export function useWebSocket(taskId: string | Ref<string>) {
-  const events = ref<TaskEvent[]>([])
+export function useWebSocket(sessionId: () => string) {
+  const events = ref<WsEvent[]>([])
   const connected = ref(false)
+
   let ws: WebSocket | null = null
   let reconnectTimer: number | null = null
   let reconnectDelay = 1000
-  let lastEventId: string | null = null
 
-  const taskIdValue = computed(() => typeof taskId === 'string' ? taskId : taskId.value)
+  function getWsBase(): string {
+    const servers = JSON.parse(localStorage.getItem('neuralswarm-servers') || '[]')
+    const base = servers[0]?.url || 'http://localhost:8080'
+    return base.replace(/^http/, 'ws')
+  }
 
   function connect() {
-    const id = taskIdValue.value
+    const id = sessionId()
     if (!id || ws?.readyState === WebSocket.OPEN) return
 
-    ws = new WebSocket(`ws://localhost:8000/ws/tasks/${id}`)
+    const wsUrl = `${getWsBase()}/ws/sessions/${id}`
+    ws = new WebSocket(wsUrl)
 
     ws.onopen = () => {
       connected.value = true
       reconnectDelay = 1000
-      if (lastEventId) {
-        ws!.send(JSON.stringify({ last_event_id: lastEventId }))
-      }
     }
 
     ws.onmessage = (msg) => {
-      const event: TaskEvent = JSON.parse(msg.data)
-      events.value.push(event)
-      if (event.event_id) {
-        lastEventId = event.event_id
+      try {
+        const event: WsEvent = JSON.parse(msg.data)
+        events.value.push(event)
+      } catch (e) {
+        console.error('WS parse error:', e)
       }
     }
 
@@ -48,9 +50,7 @@ export function useWebSocket(taskId: string | Ref<string>) {
       }, reconnectDelay)
     }
 
-    ws.onerror = () => {
-      ws?.close()
-    }
+    ws.onerror = () => ws?.close()
   }
 
   function disconnect() {
@@ -60,18 +60,19 @@ export function useWebSocket(taskId: string | Ref<string>) {
     }
     ws?.close()
     ws = null
+    connected.value = false
   }
 
-  connect()
-
-  watch(taskIdValue, (newId, oldId) => {
-    if (newId !== oldId) {
-      disconnect()
-      events.value = []
-      lastEventId = null
-      if (newId) connect()
+  watch(
+    () => sessionId(),
+    (newId, oldId) => {
+      if (newId !== oldId) {
+        disconnect()
+        events.value = []
+        if (newId) connect()
+      }
     }
-  })
+  )
 
   onUnmounted(disconnect)
 
