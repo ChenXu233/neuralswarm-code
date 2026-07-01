@@ -17,6 +17,7 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 reqwest = { version = "0.12", features = ["json"] }
 serde_yaml = "0.9"
+rusqlite = { version = "0.31", features = ["bundled"] }
 
 [dev-dependencies]
 

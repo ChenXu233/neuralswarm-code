@@ -2,6 +2,7 @@ mod config;
 mod kernel;
 mod plugins;
 mod server;
+mod storage;
 
 use std::sync::Arc;
 use clap::Parser;
