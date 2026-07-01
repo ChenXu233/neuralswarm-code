@@ -13,7 +13,7 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/api/health", get(health))
         .route("/api/sessions", post(create_session))
-        .route("/api/sessions/{id}/messages", post(send_message))
+        .route("/api/sessions/:id/messages", post(send_message))
 }
 
 async fn health() -> &'static str {

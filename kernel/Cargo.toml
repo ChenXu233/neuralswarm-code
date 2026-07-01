@@ -16,4 +16,7 @@ clap = { version = "4", features = ["derive"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+
 [workspace]
