@@ -3,11 +3,7 @@ import { ref } from 'vue'
 import { useTheme } from './composables/useTheme'
 import ActivityBar from './components/layout/ActivityBar.vue'
 import Sidebar from './components/layout/Sidebar.vue'
-import ChatPanel from './components/sidebar/ChatPanel.vue'
-import FilesPanel from './components/sidebar/FilesPanel.vue'
-import PluginsPanel from './components/sidebar/PluginsPanel.vue'
 import SettingsPanel from './components/sidebar/SettingsPanel.vue'
-import MemoryPanel from './components/sidebar/MemoryPanel.vue'
 import HomePage from './components/HomePage.vue'
 import TaskView from './views/TaskView.vue'
 import { useTask } from './composables/useTask'
@@ -91,18 +87,13 @@ loadProjects()
     <!-- Sidebar: visible when a panel is active and settings is closed -->
     <Sidebar
       v-if="activePanel && !showSettings"
-      :title="activePanel === 'chat' ? $t('sidebar.chat') : activePanel === 'files' ? $t('sidebar.files') : activePanel === 'plugins' ? $t('sidebar.plugins') : $t('sidebar.memory')"
-    >
-      <ChatPanel
-        v-if="activePanel === 'chat'"
-        :tasks="tasks"
-        :active-task-id="currentTask?.id"
-        @select="handleSelectTask"
-      />
-      <FilesPanel v-else-if="activePanel === 'files'" :has-open-project="!!selectedProject" />
-      <PluginsPanel v-else-if="activePanel === 'plugins'" />
-      <MemoryPanel v-else-if="activePanel === 'memory'" :project-id="selectedProject?.id || ''" />
-    </Sidebar>
+      :panel-id="activePanel"
+      :tasks="tasks"
+      :active-task-id="currentTask?.id"
+      :has-open-project="!!selectedProject"
+      :project-id="selectedProject?.id || ''"
+      @select="handleSelectTask"
+    />
 
     <div class="app-content">
       <HomePage

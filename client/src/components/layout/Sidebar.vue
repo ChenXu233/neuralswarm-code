@@ -1,17 +1,27 @@
 <script setup lang="ts">
-defineProps<{
-  title: string
+import { computed } from 'vue'
+import { getSlotRegistrations } from '@/core/plugin-registry'
+import type { SlotRegistration } from '@/core/types'
+
+const props = defineProps<{
+  panelId: string | null
 }>()
+
+const panels = computed(() => getSlotRegistrations('sidebar:panel'))
+
+const activePanel = computed<SlotRegistration | undefined>(() =>
+  panels.value.find(p => p.panelId === props.panelId),
+)
 </script>
 
 <template>
-  <div class="sidebar">
+  <div v-if="activePanel" class="sidebar">
     <div class="sidebar-header">
-      <span class="sidebar-title">{{ title }}</span>
+      <span class="sidebar-title">{{ activePanel.panelLabel ?? activePanel.id }}</span>
       <slot name="header-actions" />
     </div>
     <div class="sidebar-content">
-      <slot />
+      <component :is="activePanel.component" v-bind="$attrs" />
     </div>
   </div>
 </template>
